@@ -19,6 +19,7 @@ import {
   GuiltyOverlay,
   VictoryOverlay,
 } from "@/src/components/IntensityEffects";
+import { createClient } from "@/src/lib/supabase/client";
 import type { SuggestedReply, CasePoint } from "@/src/state/types";
 
 // ─── Case Summary Modal ───
@@ -169,20 +170,60 @@ export default function ChatPage() {
 
   const { saveArgument } = useHistoryStore();
 
+  // ─── Score calculation ───
+  const calculateScore = useCallback((outcome: "won" | "lost") => {
+    const state = useArgumentStore.getState();
+    const { health, exchangeCount } = state;
+    // Damage dealt to the attorney (opponent)
+    const damageDealt = health.maxHP - health.attorneyHP;
+    // Bonus for longer games (more exchanges = more engagement)
+    const exchangeBonus = Math.min(exchangeCount * 3, 30);
+    // Win bonus
+    const winBonus = outcome === "won" ? 50 : 0;
+    return damageDealt + exchangeBonus + winBonus;
+  }, []);
+
   // ─── Save to history helper ───
   const saveToHistory = useCallback(
-    (outcome: "won" | "lost") => {
+    async (outcome: "won" | "lost") => {
       const state = useArgumentStore.getState();
       if (!state.caseData) return;
-      saveArgument({
+      const score = calculateScore(outcome);
+
+      await saveArgument({
         caseData: state.caseData,
         messages: state.messages,
         outcome,
         finalHealth: state.health,
         exchangeCount: state.exchangeCount,
+        score,
       });
+
+      // Update profile stats in Supabase
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const field = outcome === "won" ? "wins" : "losses";
+        // Use RPC-style increment via raw update
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("wins, losses, total_score")
+          .eq("id", user.id)
+          .single();
+
+        if (profile) {
+          const p = profile as { wins: number; losses: number; total_score: number };
+          await supabase
+            .from("profiles")
+            .update({
+              [field]: p[field] + 1,
+              total_score: p.total_score + score,
+            })
+            .eq("id", user.id);
+        }
+      }
     },
-    [saveArgument]
+    [saveArgument, calculateScore]
   );
 
   // ─── Redirect if no case ───
@@ -260,7 +301,7 @@ export default function ChatPage() {
         // User wins!
         setShowVictory(true);
         triggerIntensityEffects(10);
-        saveToHistory("won");
+        await saveToHistory("won");
         persist();
         setTimeout(() => {
           setOutcome("won");
@@ -272,7 +313,7 @@ export default function ChatPage() {
         setGuiltyReason("ko");
         setShowGuilty(true);
         triggerIntensityEffects(10);
-        saveToHistory("lost");
+        await saveToHistory("lost");
         persist();
         setTimeout(() => {
           setOutcome("lost");
@@ -334,7 +375,7 @@ export default function ChatPage() {
 
         setGuiltyReason("surrender");
         setShowGuilty(true);
-        saveToHistory("lost");
+        await saveToHistory("lost");
         persist();
 
         setTimeout(() => {

@@ -24,6 +24,42 @@
   --guilty: #DC2626;
 }
 
+/* ─── Light mode ─── */
+.light {
+  --bg: #FFFFFF;
+  --bg-light: #F7F7F7;
+  --bg-card: #EFEFEF;
+  --primary: #FF385C;
+  --primary-dark: #E0294A;
+  --accent: #C4943F;
+  --text-primary: #222222;
+  --text-secondary: #484848;
+  --text-muted: #717171;
+  --attorney-bubble: #F0ECF5;
+  --attorney-text: #3B2D5E;
+  --user-bubble: #ECF3F8;
+  --user-text: #1A3550;
+  --chip-default: #F7F7F7;
+  --chip-border: #DDDDDD;
+  --chip-text: #222222;
+  --chip-surrender: #DC2626;
+  --objection: #FF385C;
+  --hold-it: #C4943F;
+  --take-that: #059669;
+  --guilty: #DC2626;
+}
+
+.light ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+}
+.light ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.18);
+}
+.light input:focus,
+.light textarea:focus {
+  border-color: rgba(0, 0, 0, 0.2) !important;
+}
+
 * {
   box-sizing: border-box;
 }

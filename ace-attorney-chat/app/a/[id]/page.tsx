@@ -3,56 +3,63 @@
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { useHistoryStore } from "@/src/state/historyStore";
 import { createClient } from "@/src/lib/supabase/client";
 import { HealthBarStatic } from "@/src/components/HealthBar";
 import { MessageBubble } from "@/src/components/MessageBubble";
 import type { SavedArgument } from "@/src/state/types";
 
-export default function ArgumentViewer() {
+export default function SharedArgumentViewer() {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
-  const { hydrate, getArgument } = useHistoryStore();
+  const supabase = createClient();
   const [argument, setArgument] = useState<SavedArgument | null>(null);
+  const [authorName, setAuthorName] = useState<string>("");
   const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
     async function load() {
-      await hydrate();
+      // Fetch the argument (RLS allows reading public arguments)
+      const { data, error } = await supabase
+        .from("arguments")
+        .select("*")
+        .eq("id", id)
+        .eq("is_public", true)
+        .single();
 
-      // Try local store first
-      const local = getArgument(id);
-      if (local) {
-        setArgument(local);
+      if (error || !data) {
+        setNotFound(true);
         setLoading(false);
         return;
       }
 
-      // Try Supabase
-      const supabase = createClient();
-      const { data } = await supabase
-        .from("arguments")
-        .select("*")
-        .eq("id", id)
+      const row = data as Record<string, unknown>;
+      setArgument({
+        id: row.id as string,
+        user_id: row.user_id as string,
+        caseData: row.case_data as SavedArgument["caseData"],
+        messages: row.messages as SavedArgument["messages"],
+        outcome: row.outcome as SavedArgument["outcome"],
+        finalHealth: row.final_health as SavedArgument["finalHealth"],
+        exchangeCount: row.exchange_count as number,
+        score: (row.score as number) ?? 0,
+        starred: false,
+        is_public: true,
+        createdAt: new Date(row.created_at as string).getTime(),
+      });
+
+      // Fetch author name
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("display_name")
+        .eq("id", row.user_id as string)
         .single();
 
-      if (data) {
-        const row = data as Record<string, unknown>;
-        setArgument({
-          id: row.id as string,
-          user_id: row.user_id as string,
-          caseData: row.case_data as SavedArgument["caseData"],
-          messages: row.messages as SavedArgument["messages"],
-          outcome: row.outcome as SavedArgument["outcome"],
-          finalHealth: row.final_health as SavedArgument["finalHealth"],
-          exchangeCount: row.exchange_count as number,
-          score: (row.score as number) ?? 0,
-          starred: row.starred as boolean,
-          is_public: row.is_public as boolean,
-          createdAt: new Date(row.created_at as string).getTime(),
-        });
+      if (profile) {
+        setAuthorName((profile as Record<string, unknown>).display_name as string);
       }
+
       setLoading(false);
     }
     load();
@@ -67,13 +74,15 @@ export default function ArgumentViewer() {
     );
   }
 
-  if (!argument) {
+  if (notFound || !argument) {
     return (
       <div className="flex flex-col items-center justify-center h-dvh gap-4" style={{ background: "var(--bg)" }}>
-        <p style={{ color: "var(--text-muted)" }}>Argument not found.</p>
+        <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+          This argument doesn&apos;t exist or is private.
+        </p>
         <button
           onClick={() => router.push("/")}
-          className="text-sm cursor-pointer"
+          className="text-sm px-4 py-2 rounded-full cursor-pointer"
           style={{ color: "var(--primary)" }}
         >
           Go Home
@@ -100,27 +109,24 @@ export default function ArgumentViewer() {
           className="text-sm px-3.5 py-1.5 rounded-full border cursor-pointer hover:bg-white/5 transition-all duration-150"
           style={{ borderColor: "var(--chip-border)", color: "var(--text-secondary)" }}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="inline mr-1 -mt-0.5"><path d="M19 12H5M12 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round"/></svg>
-          Back
+          Home
         </button>
         <div className="flex-1 min-w-0">
           <h1 className="text-sm font-medium text-white truncate">{argument.caseData.title}</h1>
           <p className="text-[11px] truncate mt-0.5" style={{ color: "var(--text-muted)" }}>
-            {argument.exchangeCount} rounds &middot; +{argument.score} pts &middot; {new Date(argument.createdAt).toLocaleDateString()}
+            {authorName && `by ${authorName} \u00B7 `}
+            {argument.exchangeCount} rounds &middot; +{argument.score} pts
           </p>
         </div>
         <span
           className="text-[10px] font-medium tracking-wide px-2.5 py-1 rounded-full shrink-0"
-          style={{
-            color: outcomeBadge.color,
-            background: `${outcomeBadge.color}18`,
-          }}
+          style={{ color: outcomeBadge.color, background: `${outcomeBadge.color}18` }}
         >
           {outcomeBadge.label}
         </span>
       </div>
 
-      {/* Health bar (frozen at final state) */}
+      {/* Health bar */}
       <HealthBarStatic health={argument.finalHealth} />
 
       {/* Case summary */}
@@ -134,12 +140,9 @@ export default function ArgumentViewer() {
           <span style={{ color: "var(--text-muted)" }}>Charged with: </span>
           {argument.caseData.charge}
         </p>
-        <p className="text-[11px] mt-1 leading-relaxed" style={{ color: "var(--text-muted)" }}>
-          {argument.caseData.context}
-        </p>
       </motion.div>
 
-      {/* Read-only messages */}
+      {/* Messages */}
       <div className="flex-1 overflow-y-auto flex flex-col py-2">
         {argument.messages.map((msg) => (
           <MessageBubble key={msg.id} message={msg} />

@@ -1,18 +1,50 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useArgumentStore } from "@/src/state/argumentStore";
+import { useHistoryStore } from "@/src/state/historyStore";
 import { generateCase } from "@/src/agents/caseCreator";
 import { ConversationHistory } from "@/src/components/ConversationHistory";
+import { createClient } from "@/src/lib/supabase/client";
 
 export default function SplashScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [displayName, setDisplayName] = useState<string | null>(null);
 
   const { initCase, setGeneratingCase, reset } = useArgumentStore();
+  const { setUserId: setHistoryUserId, hydrate } = useHistoryStore();
+
+  // Check auth state and hydrate history
+  useEffect(() => {
+    async function init() {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (user) {
+        setUserId(user.id);
+        setHistoryUserId(user.id);
+
+        // Get display name
+        const { data } = await supabase
+          .from("profiles")
+          .select("display_name")
+          .eq("id", user.id)
+          .single();
+        if (data) {
+          setDisplayName((data as { display_name: string }).display_name);
+        }
+      }
+
+      await hydrate();
+    }
+    init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleEnter = useCallback(async () => {
     if (loading) return;
@@ -51,12 +83,50 @@ export default function SplashScreen() {
         initial={{ opacity: 0, y: -12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className="text-center pt-14 pb-4 px-8 shrink-0"
+        className="text-center pt-10 pb-4 px-8 shrink-0"
       >
+        {/* Nav bar */}
+        <div className="flex items-center justify-between mb-6 -mx-2">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => router.push("/leaderboard")}
+              className="text-xs px-3 py-1.5 rounded-full border cursor-pointer hover:bg-white/5 transition-all duration-150"
+              style={{ borderColor: "var(--chip-border)", color: "var(--text-secondary)" }}
+            >
+              Leaderboard
+            </button>
+          </div>
+          <div className="flex items-center gap-2">
+            {userId ? (
+              <button
+                onClick={() => router.push("/profile")}
+                className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-full border cursor-pointer hover:bg-white/5 transition-all duration-150"
+                style={{ borderColor: "var(--chip-border)", color: "var(--text-secondary)" }}
+              >
+                <span
+                  className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-semibold"
+                  style={{ background: "var(--bg-card)", color: "var(--primary)" }}
+                >
+                  {(displayName ?? "?").charAt(0).toUpperCase()}
+                </span>
+                {displayName ?? "Profile"}
+              </button>
+            ) : (
+              <button
+                onClick={() => router.push("/login")}
+                className="text-xs px-3.5 py-1.5 rounded-full cursor-pointer transition-all duration-150 font-medium"
+                style={{ background: "var(--primary)", color: "white" }}
+              >
+                Sign In
+              </button>
+            )}
+          </div>
+        </div>
+
         <p className="text-[10px] tracking-[0.5em] font-medium mb-1" style={{ color: "var(--accent)" }}>
           ACE ATTORNEY
         </p>
-        <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-white">
+        <h1 className="text-3xl md:text-4xl font-semibold tracking-tight" style={{ color: "var(--text-primary)" }}>
           AI Courtroom
         </h1>
         <div className="w-10 h-[2px] mx-auto mt-3 mb-3 rounded-full" style={{ background: "var(--primary)" }} />

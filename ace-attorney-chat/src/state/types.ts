@@ -128,11 +128,40 @@ export interface ArgumentState {
 
 export interface SavedArgument {
   id: string;
+  user_id?: string;
   caseData: CaseData;
   messages: Message[];
   outcome: 'won' | 'lost' | 'in-progress';
   finalHealth: HealthState;
   exchangeCount: number;
-  createdAt: number;
+  score: number;
   starred: boolean;
+  is_public: boolean;
+  createdAt: number;
+}
+
+// ─── User Profile ───
+
+export interface UserProfile {
+  id: string;
+  display_name: string;
+  wins: number;
+  losses: number;
+  total_score: number;
+  arguments_public_by_default: boolean;
+  theme: 'dark' | 'light';
+  created_at: string;
+  updated_at: string;
+}
+
+// ─── Leaderboard Entry ───
+
+export interface LeaderboardEntry {
+  id: string;
+  display_name: string;
+  wins: number;
+  losses: number;
+  total_score: number;
+  win_rate: number;
+  rank: number;
 }
