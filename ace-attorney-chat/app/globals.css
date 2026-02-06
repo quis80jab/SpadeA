@@ -1,26 +1,26 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #1a1a2e;
-  --bg-light: #16213e;
-  --bg-card: #0f3460;
-  --primary: #e94560;
-  --primary-dark: #c23152;
-  --accent: #ffd700;
-  --text-primary: #ffffff;
-  --text-secondary: #a0a0b8;
-  --text-muted: #6c6c80;
-  --attorney-bubble: #2d1b4e;
-  --attorney-text: #e8d5ff;
-  --user-bubble: #1b3a4e;
-  --user-text: #d5eaff;
-  --chip-default: #2a2a4a;
-  --chip-border: #4a4a6a;
-  --chip-text: #e0e0f0;
+  --bg: #111111;
+  --bg-light: #1a1a1a;
+  --bg-card: #222222;
+  --primary: #FF385C;
+  --primary-dark: #E0294A;
+  --accent: #E0B97A;
+  --text-primary: #F7F7F7;
+  --text-secondary: #B0B0B0;
+  --text-muted: #717171;
+  --attorney-bubble: #1E1E2A;
+  --attorney-text: #E0D4F0;
+  --user-bubble: #1A2530;
+  --user-text: #D0E4F5;
+  --chip-default: #1F1F1F;
+  --chip-border: #333333;
+  --chip-text: #E0E0E0;
   --chip-surrender: #DC2626;
-  --objection: #ff4444;
-  --hold-it: #ffaa00;
-  --take-that: #44ff44;
+  --objection: #FF385C;
+  --hold-it: #E0B97A;
+  --take-that: #34D399;
   --guilty: #DC2626;
 }
 
@@ -36,8 +36,10 @@ body {
   color: var(--text-primary);
   font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   overflow: hidden;
   height: 100dvh;
+  letter-spacing: -0.01em;
 }
 
 #__next {
@@ -54,12 +56,19 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.14);
+}
+
+/* Focus ring for inputs */
+input:focus,
+textarea:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
 /* Hide scrollbar on suggestion carousel */

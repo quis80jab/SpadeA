@@ -44,57 +44,57 @@ export default function SplashScreen() {
   return (
     <div
       className="flex flex-col h-dvh select-none"
-      style={{ background: "linear-gradient(180deg, #1a1a2e 0%, #0f0f23 50%, #1a1a2e 100%)" }}
+      style={{ background: "var(--bg)" }}
     >
       {/* Top section: title + button */}
       <motion.div
-        initial={{ opacity: 0, y: -20 }}
+        initial={{ opacity: 0, y: -12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-        className="text-center pt-10 pb-2 px-6 shrink-0"
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="text-center pt-14 pb-4 px-8 shrink-0"
       >
-        <p className="text-[10px] tracking-[0.5em] font-semibold mb-0.5" style={{ color: "var(--accent)" }}>
+        <p className="text-[10px] tracking-[0.5em] font-medium mb-1" style={{ color: "var(--accent)" }}>
           ACE ATTORNEY
         </p>
-        <h1 className="text-3xl md:text-4xl font-black tracking-wide text-white">
-          AI COURTROOM
+        <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-white">
+          AI Courtroom
         </h1>
-        <div className="w-12 h-0.5 mx-auto mt-2 mb-2" style={{ background: "var(--primary)" }} />
-        <p className="text-xs leading-relaxed mb-4" style={{ color: "var(--text-secondary)" }}>
+        <div className="w-10 h-[2px] mx-auto mt-3 mb-3 rounded-full" style={{ background: "var(--primary)" }} />
+        <p className="text-sm leading-relaxed mb-6" style={{ color: "var(--text-muted)" }}>
           Where absurdity meets philosophy and justice is debatable
         </p>
 
         {/* Enter button */}
-        <div className="flex flex-col items-center gap-3 w-full max-w-xs mx-auto">
+        <div className="flex flex-col items-center gap-3 w-full max-w-sm mx-auto">
           {loading ? (
-            <div className="flex flex-col items-center gap-3 py-2">
+            <div className="flex flex-col items-center gap-3 py-3">
               <div
-                className="w-7 h-7 border-2 border-t-transparent rounded-full animate-spin"
-                style={{ borderColor: "var(--accent)", borderTopColor: "transparent" }}
+                className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin"
+                style={{ borderColor: "var(--primary)", borderTopColor: "transparent" }}
               />
-              <p className="text-xs" style={{ color: "var(--text-secondary)" }}>Preparing the case...</p>
+              <p className="text-sm" style={{ color: "var(--text-secondary)" }}>Preparing the case...</p>
             </div>
           ) : (
             <button
               onClick={handleEnter}
-              className="w-full py-3 px-6 rounded-xl text-white text-base font-extrabold tracking-widest
-                         transition-all duration-200 hover:brightness-110 active:scale-[0.97] cursor-pointer"
+              className="w-full py-3.5 px-8 rounded-full text-white text-sm font-semibold tracking-widest
+                         transition-all duration-200 hover:brightness-110 active:scale-[0.98] cursor-pointer"
               style={{
                 background: "var(--primary)",
-                boxShadow: "0 4px 24px rgba(233, 69, 96, 0.4)",
+                boxShadow: "0 4px 20px rgba(255, 56, 92, 0.3)",
               }}
             >
               ENTER THE COURTROOM
             </button>
           )}
           {error && (
-            <p className="text-[11px] text-center" style={{ color: "var(--primary)" }}>{error}</p>
+            <p className="text-xs text-center mt-1" style={{ color: "var(--primary)" }}>{error}</p>
           )}
         </div>
       </motion.div>
 
       {/* Divider */}
-      <div className="px-6 py-3 shrink-0">
+      <div className="px-8 py-2 shrink-0">
         <div className="h-px" style={{ background: "rgba(255,255,255,0.06)" }} />
       </div>
 
@@ -102,11 +102,11 @@ export default function SplashScreen() {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.5, duration: 0.6 }}
+        transition={{ delay: 0.4, duration: 0.5 }}
         className="flex-1 min-h-0 flex flex-col"
       >
         <h2
-          className="text-xs font-bold tracking-wider uppercase px-6 mb-2"
+          className="text-xs font-medium tracking-wider uppercase px-8 mb-3"
           style={{ color: "var(--text-muted)" }}
         >
           Past Arguments
@@ -115,7 +115,7 @@ export default function SplashScreen() {
       </motion.div>
 
       {/* Footer */}
-      <p className="text-[10px] text-center py-2 shrink-0" style={{ color: "var(--text-muted)" }}>
+      <p className="text-[10px] text-center py-3 shrink-0" style={{ color: "var(--text-muted)" }}>
         Powered by Claude AI
       </p>
     </div>

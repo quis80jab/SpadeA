@@ -11,9 +11,9 @@ interface ArgumentCardProps {
 }
 
 const outcomeBadge: Record<string, { label: string; color: string; bg: string }> = {
-  won: { label: "WON", color: "#22c55e", bg: "rgba(34,197,94,0.15)" },
-  lost: { label: "LOST", color: "#ef4444", bg: "rgba(239,68,68,0.15)" },
-  "in-progress": { label: "IN PROGRESS", color: "#eab308", bg: "rgba(234,179,8,0.15)" },
+  won: { label: "Won", color: "#34D399", bg: "rgba(52,211,153,0.12)" },
+  lost: { label: "Lost", color: "#F87171", bg: "rgba(248,113,113,0.12)" },
+  "in-progress": { label: "In Progress", color: "#E0B97A", bg: "rgba(224,185,122,0.12)" },
 };
 
 function formatDate(ts: number): string {
@@ -23,30 +23,23 @@ function formatDate(ts: number): string {
 
 export function ArgumentCard({ argument, onView, onToggleStar, index }: ArgumentCardProps) {
   const badge = outcomeBadge[argument.outcome] ?? outcomeBadge["in-progress"];
-  const healthPct = Math.round(
-    argument.outcome === "won"
-      ? (argument.finalHealth.defendantHP / argument.finalHealth.maxHP) * 100
-      : argument.outcome === "lost"
-      ? (argument.finalHealth.attorneyHP / argument.finalHealth.maxHP) * 100
-      : 0
-  );
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05, duration: 0.3 }}
-      className="rounded-xl p-4 cursor-pointer transition-all duration-150 hover:brightness-125 active:scale-[0.98]"
+      transition={{ delay: index * 0.04, duration: 0.25 }}
+      className="rounded-2xl p-5 cursor-pointer transition-all duration-150 hover:bg-white/[0.03] active:scale-[0.99]"
       style={{
         background: "var(--bg-light)",
-        border: "1px solid rgba(255,255,255,0.06)",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
       }}
       onClick={() => onView(argument.id)}
     >
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-bold text-white truncate">{argument.caseData.title}</h3>
-          <p className="text-xs mt-0.5 truncate" style={{ color: "var(--text-muted)" }}>
+          <h3 className="text-sm font-medium text-white truncate">{argument.caseData.title}</h3>
+          <p className="text-xs mt-1 truncate" style={{ color: "var(--text-muted)" }}>
             {argument.caseData.charge}
           </p>
         </div>
@@ -55,24 +48,28 @@ export function ArgumentCard({ argument, onView, onToggleStar, index }: Argument
             e.stopPropagation();
             onToggleStar(argument.id);
           }}
-          className="text-lg shrink-0 cursor-pointer p-1 -m-1"
+          className="shrink-0 cursor-pointer p-1.5 -m-1 rounded-full hover:bg-white/5 transition-colors"
           title={argument.starred ? "Unstar" : "Star"}
         >
-          {argument.starred ? "⭐" : "☆"}
+          {argument.starred ? (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="#E0B97A"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          ) : (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#717171" strokeWidth="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          )}
         </button>
       </div>
 
-      <div className="flex items-center gap-3 mt-2.5">
+      <div className="flex items-center gap-3 mt-3">
         <span
-          className="text-[10px] font-bold tracking-wider px-2 py-0.5 rounded-full"
+          className="text-[10px] font-medium tracking-wide px-2.5 py-1 rounded-full"
           style={{ color: badge.color, background: badge.bg }}
         >
           {badge.label}
         </span>
-        <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+        <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
           {argument.exchangeCount} exchanges
         </span>
-        <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+        <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
           {formatDate(argument.createdAt)}
         </span>
       </div>

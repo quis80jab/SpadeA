@@ -38,11 +38,11 @@ function CaseModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   };
 
   const PointRow = ({ p }: { p: CasePoint }) => (
-    <div className="flex gap-2 mb-2">
-      <span className="text-xs font-extrabold shrink-0 w-7 pt-0.5" style={{ color: "var(--primary)" }}>{p.id}</span>
+    <div className="flex gap-3 mb-3">
+      <span className="text-xs font-semibold shrink-0 w-7 pt-0.5" style={{ color: "var(--primary)" }}>{p.id}</span>
       <div className="flex-1 min-w-0">
-        <p className="text-[13px] text-white">{p.claim}</p>
-        <span className="text-[10px] font-bold tracking-wider" style={{ color: statusColor(p.status) }}>{p.status.toUpperCase()}</span>
+        <p className="text-sm text-white leading-relaxed">{p.claim}</p>
+        <span className="text-[10px] font-medium tracking-wider" style={{ color: statusColor(p.status) }}>{p.status.toUpperCase()}</span>
       </div>
     </div>
   );
@@ -55,25 +55,31 @@ function CaseModal({ open, onClose }: { open: boolean; onClose: () => void }) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-50 flex items-end justify-center"
-          style={{ background: "rgba(0,0,0,0.6)" }}
+          style={{ background: "rgba(0,0,0,0.5)" }}
           onClick={onClose}
         >
           <motion.div
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="w-full max-w-lg max-h-[80dvh] rounded-t-2xl p-6 overflow-y-auto"
+            transition={{ type: "spring", damping: 28, stiffness: 300 }}
+            className="w-full max-w-lg max-h-[80dvh] rounded-t-3xl px-7 pt-6 pb-8 overflow-y-auto"
             style={{ background: "var(--bg-light)" }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-extrabold text-white">Case Summary</h2>
-              <button onClick={onClose} className="text-xl p-2 cursor-pointer" style={{ color: "var(--text-muted)" }}>✕</button>
+            {/* Handle bar */}
+            <div className="flex justify-center mb-4">
+              <div className="w-10 h-1 rounded-full" style={{ background: "rgba(255,255,255,0.15)" }} />
+            </div>
+            <div className="flex justify-between items-center mb-5">
+              <h2 className="text-lg font-semibold text-white">Case Summary</h2>
+              <button onClick={onClose} className="text-sm p-2 cursor-pointer rounded-full hover:bg-white/5 transition-colors" style={{ color: "var(--text-muted)" }}>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+              </button>
             </div>
             <Section title="The Case">
-              <p className="text-sm mb-1" style={{ color: "var(--text-secondary)" }}>{caseData.charge}</p>
-              <p className="text-sm mb-1" style={{ color: "var(--text-secondary)" }}>{caseData.context}</p>
+              <p className="text-sm mb-1.5 leading-relaxed" style={{ color: "var(--text-secondary)" }}>{caseData.charge}</p>
+              <p className="text-sm mb-1.5 leading-relaxed" style={{ color: "var(--text-secondary)" }}>{caseData.context}</p>
               <p className="text-sm italic" style={{ color: "var(--accent)" }}>&ldquo;{caseData.philosophical_tension}&rdquo;</p>
             </Section>
             <Section title="Prosecution Points">
@@ -83,13 +89,15 @@ function CaseModal({ open, onClose }: { open: boolean; onClose: () => void }) {
               {defendantPoints.map((p) => <PointRow key={p.id} p={p} />)}
             </Section>
             <Section title="Score">
-              <p className="text-sm" style={{ color: "var(--text-secondary)" }}>Attorney: {analysis.attorneyScore.validPoints} valid, {analysis.attorneyScore.fallacies} fallacies</p>
-              <p className="text-sm" style={{ color: "var(--text-secondary)" }}>Defendant: {analysis.defendantScore.validPoints} valid, {analysis.defendantScore.fallacies} fallacies</p>
+              <p className="text-sm" style={{ color: "var(--text-secondary)" }}>Prosecution: {analysis.attorneyScore.validPoints} valid, {analysis.attorneyScore.fallacies} fallacies</p>
+              <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>Defense: {analysis.defendantScore.validPoints} valid, {analysis.defendantScore.fallacies} fallacies</p>
             </Section>
             {analysis.fallacies.length > 0 && (
               <Section title="Fallacies Identified">
                 {analysis.fallacies.map((f, idx) => (
-                  <p key={idx} className="text-sm" style={{ color: "var(--text-secondary)" }}>• {f.side}: {f.type} — {f.context}</p>
+                  <p key={idx} className="text-sm mb-1 leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                    <span className="font-medium">{f.side}:</span> {f.type} &mdash; {f.context}
+                  </p>
                 ))}
               </Section>
             )}
@@ -102,8 +110,8 @@ function CaseModal({ open, onClose }: { open: boolean; onClose: () => void }) {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="mb-4">
-      <h3 className="text-xs font-bold tracking-wider uppercase mt-4 mb-2" style={{ color: "var(--accent)" }}>{title}</h3>
+    <div className="mb-5">
+      <h3 className="text-xs font-medium tracking-wider uppercase mt-5 mb-2.5" style={{ color: "var(--accent)" }}>{title}</h3>
       {children}
     </div>
   );
@@ -136,6 +144,7 @@ export default function ChatPage() {
   const [showVictory, setShowVictory] = useState(false);
 
   const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
+  const hasOpenedRef = useRef(false);
 
   const {
     caseData,
@@ -183,7 +192,10 @@ export default function ChatPage() {
 
   // ─── Initial attorney opening ───
   useEffect(() => {
-    if (caseData && messages.length === 0) handleAttorneyOpening();
+    if (caseData && messages.length === 0 && !hasOpenedRef.current) {
+      hasOpenedRef.current = true;
+      handleAttorneyOpening();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseData]);
 
@@ -412,18 +424,36 @@ export default function ChatPage() {
     >
       <ShakeContainer shake={shakeActive} intensity={shakeIntensity}>
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 shrink-0" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-          <h1 className="text-sm font-bold text-white truncate flex-1 mr-2">{caseData.title}</h1>
+        <div className="flex items-center justify-between px-5 py-3.5 shrink-0" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+          <h1 className="text-sm font-medium text-white truncate flex-1 mr-3">{caseData.title}</h1>
           <div className="flex items-center gap-3">
-            <span className="text-xs font-semibold" style={{ color: "var(--accent)" }}>Exchange {exchangeCount}</span>
+            <span className="text-xs font-medium tabular-nums" style={{ color: "var(--text-muted)" }}>
+              Round {exchangeCount}
+            </span>
             <button
               onClick={() => setShowCaseModal(true)}
-              className="text-xs px-3 py-1 rounded-full border cursor-pointer hover:brightness-125 transition-all"
+              className="text-xs px-3.5 py-1.5 rounded-full border cursor-pointer hover:bg-white/5 transition-all duration-150"
               style={{ borderColor: "var(--chip-border)", color: "var(--text-secondary)" }}
             >
-              📋 Case
+              Case Details
             </button>
           </div>
+        </div>
+
+        {/* Issue Banner */}
+        <div
+          className="px-5 py-3 shrink-0"
+          style={{ background: "rgba(255,255,255,0.02)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+        >
+          <p className="text-xs font-medium" style={{ color: "var(--text-secondary)" }}>
+            <span style={{ color: "var(--text-muted)" }}>Charged with: </span>
+            {caseData.charge}
+          </p>
+          {caseData.philosophical_tension && (
+            <p className="text-[11px] italic mt-0.5" style={{ color: "var(--text-muted)" }}>
+              &ldquo;{caseData.philosophical_tension}&rdquo;
+            </p>
+          )}
         </div>
 
         {/* Health Bar */}
@@ -452,24 +482,28 @@ export default function ChatPage() {
 
         {/* Custom input */}
         {!gameOver && (
-          <div className="flex items-center gap-2 px-4 py-2 shrink-0" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+          <div className="flex items-center gap-3 px-5 py-3 shrink-0" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
             <input
               type="text"
-              placeholder="Or type your own argument..."
+              placeholder="Type your own argument..."
               value={customText}
               onChange={(e) => setCustomText(e.target.value)}
               onKeyDown={handleKeyDown}
               disabled={busy}
-              className="flex-1 rounded-full px-4 py-2.5 text-sm border outline-none disabled:opacity-50 placeholder:text-[var(--text-muted)]"
+              className="flex-1 rounded-xl px-4 py-3 text-sm border outline-none disabled:opacity-50
+                         placeholder:text-[var(--text-muted)] transition-colors duration-150"
               style={{ background: "var(--bg-light)", borderColor: "rgba(255,255,255,0.08)", color: "var(--text-primary)" }}
             />
             <button
               onClick={handleSendCustom}
               disabled={!customText.trim() || busy}
-              className="w-10 h-10 rounded-full flex items-center justify-center text-lg transition-all duration-150 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+              className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-150
+                         cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed hover:brightness-110 active:scale-[0.96]"
               style={{ background: "var(--primary)" }}
             >
-              ⚡
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <path d="M5 12h14M13 5l7 7-7 7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
             </button>
           </div>
         )}
