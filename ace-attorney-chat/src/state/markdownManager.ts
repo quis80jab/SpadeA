@@ -190,8 +190,6 @@ export function recalcScores(
   };
 }
 
-// ─── Initial analysis state ───
-
 export function createInitialAnalysis(): AnalysisState {
   return {
     assumptions: [],

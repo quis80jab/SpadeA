@@ -1,11 +1,10 @@
-import { CaseData } from '../state/types';
+import { CaseData } from '@/src/state/types';
 import { callCaseCreator } from './agentRouter';
 
 export async function generateCase(): Promise<CaseData> {
   const json = await callCaseCreator();
   const data = JSON.parse(json) as CaseData;
 
-  // Validate required fields
   if (!data.title || !data.charge || !data.context) {
     throw new Error('Invalid case data: missing required fields');
   }
@@ -21,7 +20,6 @@ export async function generateCase(): Promise<CaseData> {
     throw new Error('Invalid case data: missing opening statement');
   }
 
-  // Ensure all points have correct status
   data.attorney_points = data.attorney_points.map((p) => ({
     ...p,
     status: p.status || 'unchallenged',
