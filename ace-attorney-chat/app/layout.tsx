@@ -18,6 +18,13 @@ export const metadata: Metadata = {
   description: "An AI-powered Ace Attorney courtroom debate — where absurdity meets philosophy and justice is debatable.",
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{

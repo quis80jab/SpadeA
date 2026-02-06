@@ -66,6 +66,7 @@ BEGIN
   VALUES (
     NEW.id,
     COALESCE(
+      NEW.raw_user_meta_data->>'display_name',
       NEW.raw_user_meta_data->>'full_name',
       NEW.raw_user_meta_data->>'name',
       SPLIT_PART(NEW.email, '@', 1),

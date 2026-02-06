@@ -100,6 +100,13 @@ body {
   background: rgba(255, 255, 255, 0.14);
 }
 
+/* Prevent iOS zoom on input focus (font-size must be >= 16px) */
+@supports (-webkit-touch-callout: none) {
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+}
+
 /* Focus ring for inputs */
 input:focus,
 textarea:focus {
