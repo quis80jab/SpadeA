@@ -1,4 +1,4 @@
-import { DefendantResponse, SuggestedReply } from '../state/types';
+import { DefendantResponse, SuggestedReply } from '@/src/state/types';
 import { callDefendant } from './agentRouter';
 
 export async function getDefendantSuggestions(
@@ -7,12 +7,10 @@ export async function getDefendantSuggestions(
   const json = await callDefendant(exchangeCount);
   const data = JSON.parse(json) as DefendantResponse;
 
-  // Validate suggestions
   if (!data.suggestions || data.suggestions.length === 0) {
     throw new Error('Invalid defendant response: no suggestions');
   }
 
-  // Normalize suggestions
   const suggestions: SuggestedReply[] = data.suggestions.map((s) => ({
     text: s.text,
     type: s.type || 'strategic',

@@ -1,124 +1,63 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import Animated, {
-  FadeInLeft,
-  FadeInRight,
-  ZoomIn,
-  useAnimatedStyle,
-  useSharedValue,
-  withSequence,
-  withTiming,
-  withDelay,
-} from 'react-native-reanimated';
-import { Message } from '../state/types';
-import { colors, spacing, animation } from '../theme';
+"use client";
+
+import { motion } from "framer-motion";
+import { Message } from "@/src/state/types";
 
 interface MessageBubbleProps {
   message: Message;
 }
 
 export function MessageBubble({ message }: MessageBubbleProps) {
-  const isAttorney = message.sender === 'attorney';
+  const isAttorney = message.sender === "attorney";
   const intensity = message.intensity ?? 1;
 
-  // Determine animation based on intensity
-  const getEntering = () => {
-    if (!isAttorney) {
-      return FadeInRight.duration(animation.normal);
-    }
-    if (intensity >= 7) {
-      return ZoomIn.duration(animation.slow).springify();
-    }
-    return FadeInLeft.duration(animation.normal);
-  };
-
-  // Scale up text slightly for high intensity
-  const scale = intensity >= 4 ? 1 + (intensity - 4) * 0.02 : 1;
+  const scale = intensity >= 4 ? 1 + (intensity - 4) * 0.01 : 1;
 
   return (
-    <Animated.View
-      entering={getEntering()}
-      style={[
-        styles.container,
-        isAttorney ? styles.attorneyContainer : styles.userContainer,
-      ]}
+    <motion.div
+      initial={
+        isAttorney
+          ? intensity >= 7
+            ? { opacity: 0, scale: 0.8 }
+            : { opacity: 0, x: -30 }
+          : { opacity: 0, x: 30 }
+      }
+      animate={{ opacity: 1, x: 0, scale: 1 }}
+      transition={{
+        duration: intensity >= 7 ? 0.4 : 0.3,
+        type: intensity >= 7 ? "spring" : "tween",
+      }}
+      className={`flex flex-col max-w-[85%] my-1 px-4 ${
+        isAttorney ? "self-start" : "self-end"
+      }`}
     >
-      {/* Sender label */}
-      <Text style={[styles.senderLabel, isAttorney ? styles.attorneyLabel : styles.userLabel]}>
-        {isAttorney ? '⚔️ PROSECUTOR' : '🛡️ YOU'}
-      </Text>
-
-      {/* Message bubble */}
-      <View
-        style={[
-          styles.bubble,
-          isAttorney ? styles.attorneyBubble : styles.userBubble,
-        ]}
+      <span
+        className={`text-[10px] font-bold tracking-wider mb-1 ${
+          isAttorney ? "text-left" : "text-right"
+        }`}
+        style={{ color: isAttorney ? "var(--primary)" : "var(--accent)" }}
       >
-        <Text
-          style={[
-            styles.messageText,
-            isAttorney ? styles.attorneyText : styles.userText,
-            { transform: [{ scale }] },
-          ]}
+        {isAttorney ? "⚔️ PROSECUTOR" : "🛡️ YOU"}
+      </span>
+
+      <div
+        className={`rounded-2xl px-4 py-3 border ${
+          isAttorney
+            ? "rounded-tl-sm border-[rgba(232,213,255,0.1)]"
+            : "rounded-tr-sm border-[rgba(213,234,255,0.1)]"
+        }`}
+        style={{
+          background: isAttorney ? "var(--attorney-bubble)" : "var(--user-bubble)",
+          transform: `scale(${scale})`,
+        }}
+      >
+        <p
+          className="text-[15px] leading-relaxed whitespace-pre-wrap"
+          style={{ color: isAttorney ? "var(--attorney-text)" : "var(--user-text)" }}
         >
           {message.text}
-        </Text>
-      </View>
-    </Animated.View>
+        </p>
+      </div>
+    </motion.div>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    marginVertical: spacing.xs,
-    paddingHorizontal: spacing.md,
-    maxWidth: '85%',
-  },
-  attorneyContainer: {
-    alignSelf: 'flex-start',
-  },
-  userContainer: {
-    alignSelf: 'flex-end',
-  },
-  senderLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 1,
-    marginBottom: 4,
-  },
-  attorneyLabel: {
-    color: colors.primary,
-  },
-  userLabel: {
-    color: colors.accent,
-    textAlign: 'right',
-  },
-  bubble: {
-    borderRadius: 16,
-    padding: spacing.md,
-    paddingHorizontal: spacing.md + 4,
-  },
-  attorneyBubble: {
-    backgroundColor: colors.attorneyBubble,
-    borderTopLeftRadius: 4,
-    borderWidth: 1,
-    borderColor: 'rgba(232, 213, 255, 0.1)',
-  },
-  userBubble: {
-    backgroundColor: colors.userBubble,
-    borderTopRightRadius: 4,
-    borderWidth: 1,
-    borderColor: 'rgba(213, 234, 255, 0.1)',
-  },
-  messageText: {
-    fontSize: 15,
-    lineHeight: 22,
-  },
-  attorneyText: {
-    color: colors.attorneyText,
-  },
-  userText: {
-    color: colors.userText,
-  },
-});

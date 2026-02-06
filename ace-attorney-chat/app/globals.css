@@ -1,0 +1,93 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #1a1a2e;
+  --bg-light: #16213e;
+  --bg-card: #0f3460;
+  --primary: #e94560;
+  --primary-dark: #c23152;
+  --accent: #ffd700;
+  --text-primary: #ffffff;
+  --text-secondary: #a0a0b8;
+  --text-muted: #6c6c80;
+  --attorney-bubble: #2d1b4e;
+  --attorney-text: #e8d5ff;
+  --user-bubble: #1b3a4e;
+  --user-text: #d5eaff;
+  --chip-default: #2a2a4a;
+  --chip-border: #4a4a6a;
+  --chip-text: #e0e0f0;
+  --chip-surrender: #DC2626;
+  --objection: #ff4444;
+  --hold-it: #ffaa00;
+  --take-that: #44ff44;
+  --guilty: #DC2626;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  height: 100dvh;
+}
+
+#__next {
+  height: 100dvh;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Hide scrollbar on suggestion carousel */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Shimmer animation for skeleton chips */
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: 200px 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 25%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.03) 75%
+  );
+  background-size: 400px 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}

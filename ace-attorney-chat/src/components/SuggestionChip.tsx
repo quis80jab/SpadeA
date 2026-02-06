@@ -1,8 +1,7 @@
-import React from 'react';
-import { Pressable, Text, StyleSheet } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
-import { SuggestedReply } from '../state/types';
-import { colors, spacing } from '../theme';
+"use client";
+
+import { motion } from "framer-motion";
+import { SuggestedReply } from "@/src/state/types";
 
 interface SuggestionChipProps {
   suggestion: SuggestedReply;
@@ -12,86 +11,40 @@ interface SuggestionChipProps {
 }
 
 const typeEmoji: Record<string, string> = {
-  objection: '⚡',
-  evidence: '📋',
-  dramatic: '🔥',
-  strategic: '🎯',
-  surrender: '🏳️',
+  objection: "⚡",
+  evidence: "📋",
+  dramatic: "🔥",
+  strategic: "🎯",
+  surrender: "🏳️",
 };
 
 export function SuggestionChip({ suggestion, onPress, index, disabled }: SuggestionChipProps) {
-  const isSurrender = suggestion.variant === 'surrender';
+  const isSurrender = suggestion.variant === "surrender";
 
   return (
-    <Animated.View entering={FadeIn.delay(index * 80).duration(300)}>
-      <Pressable
-        onPress={() => onPress(suggestion)}
-        disabled={disabled}
-        style={({ pressed }) => [
-          styles.chip,
-          isSurrender ? styles.surrenderChip : styles.defaultChip,
-          pressed && (isSurrender ? styles.surrenderPressed : styles.defaultPressed),
-          disabled && styles.disabledChip,
-        ]}
+    <motion.button
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.08, duration: 0.3 }}
+      onClick={() => onPress(suggestion)}
+      disabled={disabled}
+      className={`flex items-center gap-2 px-4 py-2.5 rounded-full border shrink-0
+                  transition-all duration-150 cursor-pointer select-none
+                  hover:brightness-125 active:scale-[0.96]
+                  disabled:opacity-50 disabled:cursor-not-allowed
+                  max-w-[260px] min-w-[140px]`}
+      style={{
+        background: isSurrender ? "var(--chip-surrender)" : "var(--chip-default)",
+        borderColor: isSurrender ? "#b91c1c" : "var(--chip-border)",
+      }}
+    >
+      <span className="text-base shrink-0">{typeEmoji[suggestion.type] ?? "💬"}</span>
+      <span
+        className="text-[13px] font-semibold text-left leading-tight"
+        style={{ color: isSurrender ? "#fff" : "var(--chip-text)" }}
       >
-        <Text style={styles.emoji}>{typeEmoji[suggestion.type] ?? '💬'}</Text>
-        <Text
-          style={[
-            styles.chipText,
-            isSurrender ? styles.surrenderText : styles.defaultText,
-          ]}
-          numberOfLines={3}
-        >
-          {suggestion.text}
-        </Text>
-      </Pressable>
-    </Animated.View>
+        {suggestion.text}
+      </span>
+    </motion.button>
   );
 }
-
-const styles = StyleSheet.create({
-  chip: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm + 2,
-    borderRadius: 20,
-    borderWidth: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    maxWidth: 260,
-    minWidth: 140,
-  },
-  defaultChip: {
-    backgroundColor: colors.chipDefault,
-    borderColor: colors.chipBorder,
-  },
-  surrenderChip: {
-    backgroundColor: colors.chipSurrender,
-    borderColor: '#b91c1c',
-  },
-  defaultPressed: {
-    backgroundColor: '#3a3a5a',
-    transform: [{ scale: 0.96 }],
-  },
-  surrenderPressed: {
-    backgroundColor: '#b91c1c',
-    transform: [{ scale: 0.96 }],
-  },
-  disabledChip: {
-    opacity: 0.5,
-  },
-  emoji: {
-    fontSize: 16,
-  },
-  chipText: {
-    fontSize: 13,
-    fontWeight: '600',
-    flexShrink: 1,
-  },
-  defaultText: {
-    color: colors.chipText,
-  },
-  surrenderText: {
-    color: colors.chipSurrenderText,
-  },
-});

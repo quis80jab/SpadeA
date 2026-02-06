@@ -43,6 +43,16 @@ export interface LawyerResponse {
   fallacies_identified: FallacyEntry[];
   assumptions_challenged: AssumptionEntry[];
   intensity_level: number;
+  damage_to_attorney: number;
+  damage_to_defendant: number;
+}
+
+// ─── Health State ───
+
+export interface HealthState {
+  attorneyHP: number;
+  defendantHP: number;
+  maxHP: number;
 }
 
 // ─── Defendant Agent Output ───
@@ -96,28 +106,33 @@ export interface AnalysisState {
 
 // ─── App State ───
 
-export type GamePhase = 'splash' | 'generating' | 'intro' | 'chat' | 'surrender' | 'ended';
+export type GamePhase = 'splash' | 'generating' | 'intro' | 'chat' | 'surrender' | 'victory' | 'ended';
 
 export interface ArgumentState {
-  // Game phase
   phase: GamePhase;
-
-  // Case data
   caseData: CaseData | null;
   attorneyPoints: CasePoint[];
   defendantPoints: CasePoint[];
   analysis: AnalysisState;
-
-  // Chat
+  health: HealthState;
   messages: Message[];
   suggestions: SuggestedReply[];
   exchangeCount: number;
-
-  // Loading states
   isGeneratingCase: boolean;
   isAttorneyThinking: boolean;
   isSuggestionsLoading: boolean;
-
-  // Outcome
   outcome: 'pending' | 'won' | 'lost' | null;
+}
+
+// ─── Saved Argument (history) ───
+
+export interface SavedArgument {
+  id: string;
+  caseData: CaseData;
+  messages: Message[];
+  outcome: 'won' | 'lost' | 'in-progress';
+  finalHealth: HealthState;
+  exchangeCount: number;
+  createdAt: number;
+  starred: boolean;
 }

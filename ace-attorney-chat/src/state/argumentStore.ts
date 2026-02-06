@@ -1,12 +1,10 @@
 import { create } from 'zustand';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   ArgumentState,
   CaseData,
-  CasePoint,
+  HealthState,
   Message,
   SuggestedReply,
-  AnalysisState,
   GamePhase,
   PointUpdate,
   FallacyEntry,
@@ -22,32 +20,24 @@ import {
 
 const STORAGE_KEY = 'ace_attorney_state';
 
+const DEFAULT_HEALTH: HealthState = { attorneyHP: 100, defendantHP: 100, maxHP: 100 };
+
 interface ArgumentActions {
-  // Lifecycle
   initCase: (caseData: CaseData) => void;
   setPhase: (phase: GamePhase) => void;
   reset: () => void;
-
-  // Messages
   addMessage: (text: string, sender: 'attorney' | 'user', intensity?: number) => void;
   setSuggestions: (suggestions: SuggestedReply[]) => void;
   incrementExchange: () => void;
-
-  // State updates from agents
   updatePoints: (updates: PointUpdate[]) => void;
   updateAnalysis: (fallacies: FallacyEntry[], assumptions: AssumptionEntry[]) => void;
-
-  // Loading states
   setGeneratingCase: (v: boolean) => void;
   setAttorneyThinking: (v: boolean) => void;
   setSuggestionsLoading: (v: boolean) => void;
-
-  // Outcome
   setOutcome: (outcome: 'won' | 'lost') => void;
-
-  // Persistence
-  persist: () => Promise<void>;
-  hydrate: () => Promise<void>;
+  applyDamage: (toAttorney: number, toDefendant: number) => 'none' | 'attorney_ko' | 'defendant_ko';
+  persist: () => void;
+  hydrate: () => void;
 }
 
 const initialState: ArgumentState = {
@@ -56,6 +46,7 @@ const initialState: ArgumentState = {
   attorneyPoints: [],
   defendantPoints: [],
   analysis: createInitialAnalysis(),
+  health: { ...DEFAULT_HEALTH },
   messages: [],
   suggestions: [],
   exchangeCount: 0,
@@ -67,8 +58,6 @@ const initialState: ArgumentState = {
 
 export const useArgumentStore = create<ArgumentState & ArgumentActions>((set, get) => ({
   ...initialState,
-
-  // ─── Lifecycle ───
 
   initCase: (caseData: CaseData) =>
     set({
@@ -88,6 +77,7 @@ export const useArgumentStore = create<ArgumentState & ArgumentActions>((set, ge
           challenged: 0,
         },
       },
+      health: { ...DEFAULT_HEALTH },
       messages: [],
       suggestions: [],
       exchangeCount: 0,
@@ -98,8 +88,6 @@ export const useArgumentStore = create<ArgumentState & ArgumentActions>((set, ge
   setPhase: (phase: GamePhase) => set({ phase }),
 
   reset: () => set({ ...initialState }),
-
-  // ─── Messages ───
 
   addMessage: (text: string, sender: 'attorney' | 'user', intensity?: number) => {
     const msg: Message = {
@@ -117,20 +105,10 @@ export const useArgumentStore = create<ArgumentState & ArgumentActions>((set, ge
   incrementExchange: () =>
     set((state) => ({ exchangeCount: state.exchangeCount + 1 })),
 
-  // ─── Agent state updates ───
-
   updatePoints: (updates: PointUpdate[]) =>
     set((state) => {
-      const result = applyPointUpdates(
-        state.attorneyPoints,
-        state.defendantPoints,
-        updates
-      );
-      const analysis = recalcScores(
-        state.analysis,
-        result.attorneyPoints,
-        result.defendantPoints
-      );
+      const result = applyPointUpdates(state.attorneyPoints, state.defendantPoints, updates);
+      const analysis = recalcScores(state.analysis, result.attorneyPoints, result.defendantPoints);
       return { ...result, analysis };
     }),
 
@@ -146,51 +124,69 @@ export const useArgumentStore = create<ArgumentState & ArgumentActions>((set, ge
       return { analysis };
     }),
 
-  // ─── Loading states ───
-
   setGeneratingCase: (v: boolean) => set({ isGeneratingCase: v }),
   setAttorneyThinking: (v: boolean) => set({ isAttorneyThinking: v }),
   setSuggestionsLoading: (v: boolean) => set({ isSuggestionsLoading: v }),
 
-  // ─── Outcome ───
-
   setOutcome: (outcome: 'won' | 'lost') => set({ outcome, phase: 'ended' }),
 
-  // ─── Persistence ───
-
-  persist: async () => {
+  applyDamage: (toAttorney: number, toDefendant: number) => {
     const state = get();
-    const data: ArgumentState = {
-      phase: state.phase,
-      caseData: state.caseData,
-      attorneyPoints: state.attorneyPoints,
-      defendantPoints: state.defendantPoints,
-      analysis: state.analysis,
-      messages: state.messages,
-      suggestions: state.suggestions,
-      exchangeCount: state.exchangeCount,
-      isGeneratingCase: false,
-      isAttorneyThinking: false,
-      isSuggestionsLoading: false,
-      outcome: state.outcome,
-    };
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    const newAttorneyHP = Math.max(0, state.health.attorneyHP - toAttorney);
+    const newDefendantHP = Math.max(0, state.health.defendantHP - toDefendant);
+
+    set({
+      health: {
+        ...state.health,
+        attorneyHP: newAttorneyHP,
+        defendantHP: newDefendantHP,
+      },
+    });
+
+    if (newAttorneyHP <= 0) return 'attorney_ko';
+    if (newDefendantHP <= 0) return 'defendant_ko';
+    return 'none';
   },
 
-  hydrate: async () => {
+  persist: () => {
     try {
-      const raw = await AsyncStorage.getItem(STORAGE_KEY);
+      const state = get();
+      const data: ArgumentState = {
+        phase: state.phase,
+        caseData: state.caseData,
+        attorneyPoints: state.attorneyPoints,
+        defendantPoints: state.defendantPoints,
+        analysis: state.analysis,
+        health: state.health,
+        messages: state.messages,
+        suggestions: state.suggestions,
+        exchangeCount: state.exchangeCount,
+        isGeneratingCase: false,
+        isAttorneyThinking: false,
+        isSuggestionsLoading: false,
+        outcome: state.outcome,
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch {
+      // localStorage not available (SSR)
+    }
+  },
+
+  hydrate: () => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const data = JSON.parse(raw) as ArgumentState;
         set({
           ...data,
+          health: data.health ?? { ...DEFAULT_HEALTH },
           isGeneratingCase: false,
           isAttorneyThinking: false,
           isSuggestionsLoading: false,
         });
       }
     } catch {
-      // Ignore hydration errors, start fresh
+      // Ignore hydration errors
     }
   },
 }));

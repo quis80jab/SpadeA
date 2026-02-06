@@ -1,9 +1,8 @@
-import React from 'react';
-import { View, ScrollView, StyleSheet, Text } from 'react-native';
-import Animated, { FadeIn, FadeOut, Layout } from 'react-native-reanimated';
-import { SuggestionChip } from './SuggestionChip';
-import { SuggestedReply } from '../state/types';
-import { colors, spacing } from '../theme';
+"use client";
+
+import { motion, AnimatePresence } from "framer-motion";
+import { SuggestionChip } from "./SuggestionChip";
+import { SuggestedReply } from "@/src/state/types";
 
 interface SuggestionCarouselProps {
   suggestions: SuggestedReply[];
@@ -14,13 +13,17 @@ interface SuggestionCarouselProps {
 
 function SkeletonChip({ index }: { index: number }) {
   return (
-    <Animated.View
-      entering={FadeIn.delay(index * 60).duration(200)}
-      style={styles.skeleton}
+    <div
+      className="w-[180px] h-[52px] rounded-full border shrink-0 p-4 flex flex-col justify-center gap-1.5 skeleton-shimmer"
+      style={{
+        background: "var(--chip-default)",
+        borderColor: "var(--chip-border)",
+        animationDelay: `${index * 0.15}s`,
+      }}
     >
-      <View style={styles.skeletonLine} />
-      <View style={[styles.skeletonLine, { width: '60%' }]} />
-    </Animated.View>
+      <div className="h-2 rounded-full bg-white/[0.06] w-4/5" />
+      <div className="h-2 rounded-full bg-white/[0.06] w-3/5" />
+    </div>
   );
 }
 
@@ -32,80 +35,50 @@ export function SuggestionCarousel({
 }: SuggestionCarouselProps) {
   if (isLoading) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.label}>Preparing your options...</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
+      <div className="py-2">
+        <p
+          className="text-[11px] font-semibold tracking-wider uppercase px-4 mb-1"
+          style={{ color: "var(--text-muted)" }}
         >
+          Preparing your options...
+        </p>
+        <div className="flex gap-2 px-4 overflow-x-auto hide-scrollbar">
           {[0, 1, 2, 3].map((i) => (
             <SkeletonChip key={i} index={i} />
           ))}
-        </ScrollView>
-      </View>
+        </div>
+      </div>
     );
   }
 
   if (suggestions.length === 0) return null;
 
   return (
-    <Animated.View
-      entering={FadeIn.duration(300)}
-      style={styles.container}
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="py-2"
     >
-      <Text style={styles.label}>Your response:</Text>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+      <p
+        className="text-[11px] font-semibold tracking-wider uppercase px-4 mb-1"
+        style={{ color: "var(--text-muted)" }}
       >
-        {suggestions.map((suggestion, idx) => (
-          <SuggestionChip
-            key={`${suggestion.text}-${idx}`}
-            suggestion={suggestion}
-            onPress={onSelect}
-            index={idx}
-            disabled={disabled}
-          />
-        ))}
-      </ScrollView>
-    </Animated.View>
+        Your response:
+      </p>
+      <div className="flex gap-2 px-4 overflow-x-auto hide-scrollbar pb-1">
+        <AnimatePresence mode="popLayout">
+          {suggestions.map((suggestion, idx) => (
+            <SuggestionChip
+              key={`${suggestion.text}-${idx}`}
+              suggestion={suggestion}
+              onPress={onSelect}
+              index={idx}
+              disabled={disabled}
+            />
+          ))}
+        </AnimatePresence>
+      </div>
+    </motion.div>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    paddingVertical: spacing.sm,
-  },
-  label: {
-    fontSize: 11,
-    color: colors.textMuted,
-    fontWeight: '600',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    paddingHorizontal: spacing.md,
-    marginBottom: spacing.xs,
-  },
-  scrollContent: {
-    paddingHorizontal: spacing.md,
-    gap: spacing.sm,
-  },
-  skeleton: {
-    width: 180,
-    height: 52,
-    backgroundColor: colors.chipDefault,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: colors.chipBorder,
-    padding: spacing.md,
-    justifyContent: 'center',
-    gap: 6,
-  },
-  skeletonLine: {
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    width: '80%',
-  },
-});

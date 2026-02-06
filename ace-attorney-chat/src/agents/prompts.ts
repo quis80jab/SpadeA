@@ -48,8 +48,26 @@ YOUR OUTPUT (strict JSON, no markdown fences, no commentary — ONLY the JSON ob
   "assumptions_challenged": [
     {"side": "defendant", "assumption": "...", "new_state": "CHALLENGED"}
   ],
-  "intensity_level": 5
+  "intensity_level": 5,
+  "damage_to_attorney": 10,
+  "damage_to_defendant": 12
 }
+
+HEALTH BAR SYSTEM — Both sides have 100 HP. You must assess damage for EACH exchange:
+- damage_to_attorney (0-25): How much the defendant's argument hurt the prosecution. Score based on:
+  * Evidence presented (citing specific defense points): 15-25 damage
+  * Objections (challenging logic directly): 10-20 damage
+  * Strategic redirections: 8-15 damage
+  * Dramatic flair only: 3-8 damage
+  * Weak or irrelevant arguments: 0-5 damage
+- damage_to_defendant (0-25): How much YOUR counter-argument hurt the defense. Score based on:
+  * Successfully refuting a defense point: 15-25 damage
+  * Challenging a defense point with evidence: 10-20 damage
+  * Identifying a fallacy: 12-18 damage
+  * Strong rhetorical counter: 8-15 damage
+  * Weak counter or acknowledgment: 0-5 damage
+
+Be FAIR in your damage assessment. If the defendant made a strong evidence-based argument, give them high damage_to_attorney even if you counter well.
 
 KEY BEHAVIOR:
 - Never concede easily. Fight every point.
@@ -62,7 +80,7 @@ KEY BEHAVIOR:
 export const LAWYER_SURRENDER_ADDENDUM = `
 The defendant has SURRENDERED. Deliver a magnificent, dramatic victory speech.
 Be theatrical but gracious. Reference the key points of the case.
-Set intensity_level to 10.`;
+Set intensity_level to 10. Set damage_to_attorney to 0 and damage_to_defendant to 0 (no combat damage on surrender).`;
 
 export const DEFENDANT_PROMPT = `You are the defense counsel assisting the user in an Ace Attorney-style courtroom.
 

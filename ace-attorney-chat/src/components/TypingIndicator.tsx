@@ -1,102 +1,44 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withTiming,
-  withDelay,
-  withSequence,
-  FadeIn,
-  FadeOut,
-} from 'react-native-reanimated';
-import { colors, spacing } from '../theme';
+"use client";
+
+import { motion } from "framer-motion";
 
 export function TypingIndicator() {
-  const dot1 = useSharedValue(0.3);
-  const dot2 = useSharedValue(0.3);
-  const dot3 = useSharedValue(0.3);
-
-  useEffect(() => {
-    const dur = 400;
-    dot1.value = withRepeat(
-      withSequence(withTiming(1, { duration: dur }), withTiming(0.3, { duration: dur })),
-      -1,
-      false
-    );
-    dot2.value = withDelay(
-      150,
-      withRepeat(
-        withSequence(withTiming(1, { duration: dur }), withTiming(0.3, { duration: dur })),
-        -1,
-        false
-      )
-    );
-    dot3.value = withDelay(
-      300,
-      withRepeat(
-        withSequence(withTiming(1, { duration: dur }), withTiming(0.3, { duration: dur })),
-        -1,
-        false
-      )
-    );
-  }, []);
-
-  const dot1Style = useAnimatedStyle(() => ({ opacity: dot1.value }));
-  const dot2Style = useAnimatedStyle(() => ({ opacity: dot2.value }));
-  const dot3Style = useAnimatedStyle(() => ({ opacity: dot3.value }));
-
   return (
-    <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(200)} style={styles.container}>
-      <Text style={styles.label}>⚔️ PROSECUTOR</Text>
-      <View style={styles.bubble}>
-        <View style={styles.dotsRow}>
-          <Animated.View style={[styles.dot, dot1Style]} />
-          <Animated.View style={[styles.dot, dot2Style]} />
-          <Animated.View style={[styles.dot, dot3Style]} />
-        </View>
-        <Text style={styles.thinkingText}>Preparing argument...</Text>
-      </View>
-    </Animated.View>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="self-start px-4 my-1 max-w-[70%]"
+    >
+      <span
+        className="text-[10px] font-bold tracking-wider block mb-1"
+        style={{ color: "var(--primary)" }}
+      >
+        ⚔️ PROSECUTOR
+      </span>
+      <div
+        className="rounded-2xl rounded-tl-sm px-4 py-3 border border-[rgba(232,213,255,0.1)]"
+        style={{ background: "var(--attorney-bubble)" }}
+      >
+        <div className="flex gap-1.5 mb-1.5">
+          {[0, 1, 2].map((i) => (
+            <motion.div
+              key={i}
+              className="w-2 h-2 rounded-full"
+              style={{ background: "var(--attorney-text)" }}
+              animate={{ opacity: [0.3, 1, 0.3] }}
+              transition={{
+                duration: 0.8,
+                repeat: Infinity,
+                delay: i * 0.15,
+              }}
+            />
+          ))}
+        </div>
+        <p className="text-xs italic" style={{ color: "var(--text-muted)" }}>
+          Preparing argument...
+        </p>
+      </div>
+    </motion.div>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: spacing.md,
-    marginVertical: spacing.xs,
-    maxWidth: '70%',
-  },
-  label: {
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 1,
-    color: colors.primary,
-    marginBottom: 4,
-  },
-  bubble: {
-    backgroundColor: colors.attorneyBubble,
-    borderRadius: 16,
-    borderTopLeftRadius: 4,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: 'rgba(232, 213, 255, 0.1)',
-  },
-  dotsRow: {
-    flexDirection: 'row',
-    gap: 6,
-    marginBottom: 6,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.attorneyText,
-  },
-  thinkingText: {
-    fontSize: 12,
-    color: colors.textMuted,
-    fontStyle: 'italic',
-  },
-});

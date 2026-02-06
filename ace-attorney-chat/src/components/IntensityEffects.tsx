@@ -1,97 +1,79 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  withSequence,
-  withDelay,
-  runOnJS,
-  FadeIn,
-  FadeOut,
-  ZoomIn,
-} from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
-import { colors, spacing } from '../theme';
+"use client";
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+import { useEffect } from "react";
+import { motion, AnimatePresence, useAnimation } from "framer-motion";
 
-// ─── Screen Flash (intensity 7+) ───
+// ─── Flash Overlay ───
 
 interface FlashOverlayProps {
   visible: boolean;
   color?: string;
-  onDone?: () => void;
 }
 
-export function FlashOverlay({ visible, color = colors.flashWhite, onDone }: FlashOverlayProps) {
-  const opacity = useSharedValue(0);
-
-  useEffect(() => {
-    if (visible) {
-      opacity.value = withSequence(
-        withTiming(1, { duration: 80 }),
-        withTiming(0, { duration: 400 })
-      );
-      if (onDone) {
-        setTimeout(onDone, 500);
-      }
-    }
-  }, [visible]);
-
-  const style = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-  }));
-
-  if (!visible) return null;
-
+export function FlashOverlay({
+  visible,
+  color = "rgba(255,255,255,0.9)",
+}: FlashOverlayProps) {
   return (
-    <Animated.View
-      style={[styles.fullOverlay, { backgroundColor: color }, style]}
-      pointerEvents="none"
-    />
+    <AnimatePresence>
+      {visible && (
+        <motion.div
+          initial={{ opacity: 1 }}
+          animate={{ opacity: 0 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.4 }}
+          className="fixed inset-0 z-[100] pointer-events-none"
+          style={{ background: color }}
+        />
+      )}
+    </AnimatePresence>
   );
 }
 
-// ─── OBJECTION! Banner (intensity 7-9) ───
+// ─── OBJECTION! Banner ───
 
 interface ObjectionBannerProps {
   visible: boolean;
   text?: string;
-  onDone?: () => void;
 }
 
 export function ObjectionBanner({
   visible,
-  text = 'OBJECTION!',
-  onDone,
+  text = "OBJECTION!",
 }: ObjectionBannerProps) {
-  useEffect(() => {
-    if (visible) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-      if (onDone) {
-        setTimeout(onDone, 1200);
-      }
-    }
-  }, [visible]);
-
-  if (!visible) return null;
-
   return (
-    <Animated.View
-      entering={ZoomIn.duration(300).springify()}
-      exiting={FadeOut.duration(400)}
-      style={styles.bannerOverlay}
-      pointerEvents="none"
-    >
-      <View style={styles.bannerBg}>
-        <Text style={styles.bannerText}>{text}</Text>
-      </View>
-    </Animated.View>
+    <AnimatePresence>
+      {visible && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.5 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.8 }}
+          transition={{ type: "spring", duration: 0.3 }}
+          className="fixed inset-0 z-[99] flex items-center justify-center pointer-events-none"
+        >
+          <div
+            className="px-12 py-4 rounded"
+            style={{
+              background: "var(--objection)",
+              boxShadow: "0 0 60px rgba(255, 68, 68, 0.8)",
+            }}
+          >
+            <span
+              className="text-4xl md:text-5xl font-black text-white tracking-widest"
+              style={{
+                textShadow: "2px 2px 4px rgba(0,0,0,0.5)",
+              }}
+            >
+              {text}
+            </span>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 
-// ─── Screen Shake Container (intensity 4-6) ───
+// ─── Screen Shake Container ───
 
 interface ShakeContainerProps {
   shake: boolean;
@@ -100,179 +82,155 @@ interface ShakeContainerProps {
 }
 
 export function ShakeContainer({ shake, intensity, children }: ShakeContainerProps) {
-  const translateX = useSharedValue(0);
+  const controls = useAnimation();
 
   useEffect(() => {
     if (shake && intensity >= 4) {
-      const magnitude = Math.min((intensity - 3) * 2, 10);
-      translateX.value = withSequence(
-        withTiming(magnitude, { duration: 40 }),
-        withTiming(-magnitude, { duration: 40 }),
-        withTiming(magnitude * 0.6, { duration: 40 }),
-        withTiming(-magnitude * 0.6, { duration: 40 }),
-        withTiming(magnitude * 0.3, { duration: 40 }),
-        withTiming(0, { duration: 40 })
-      );
-      if (intensity >= 4 && intensity < 7) {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      }
+      const mag = Math.min((intensity - 3) * 2, 10);
+      controls.start({
+        x: [0, mag, -mag, mag * 0.6, -mag * 0.6, mag * 0.3, 0],
+        transition: { duration: 0.3, ease: "easeOut" },
+      });
     }
-  }, [shake, intensity]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: translateX.value }],
-  }));
+  }, [shake, intensity, controls]);
 
   return (
-    <Animated.View style={[styles.shakeContainer, animatedStyle]}>
+    <motion.div animate={controls} className="flex flex-col h-full">
       {children}
-    </Animated.View>
+    </motion.div>
   );
 }
 
-// ─── Gavel Slam (intensity 10) ───
+// ─── Gavel Slam ───
 
 interface GavelSlamProps {
   visible: boolean;
-  onDone?: () => void;
 }
 
-export function GavelSlam({ visible, onDone }: GavelSlamProps) {
-  useEffect(() => {
-    if (visible) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-      if (onDone) {
-        setTimeout(onDone, 1500);
-      }
-    }
-  }, [visible]);
-
-  if (!visible) return null;
-
+export function GavelSlam({ visible }: GavelSlamProps) {
   return (
-    <Animated.View
-      entering={ZoomIn.duration(200)}
-      exiting={FadeOut.delay(800).duration(400)}
-      style={styles.gavelOverlay}
-      pointerEvents="none"
-    >
-      <Text style={styles.gavelEmoji}>🔨</Text>
-      <Text style={styles.gavelText}>ORDER!</Text>
-    </Animated.View>
+    <AnimatePresence>
+      {visible && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="fixed inset-0 z-[100] flex flex-col items-center justify-center pointer-events-none"
+          style={{ background: "rgba(0,0,0,0.6)" }}
+        >
+          <motion.span
+            initial={{ scale: 3, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", duration: 0.3 }}
+            className="text-8xl"
+          >
+            🔨
+          </motion.span>
+          <motion.span
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.3 }}
+            className="text-3xl font-black tracking-[0.3em] mt-4"
+            style={{ color: "var(--accent)" }}
+          >
+            ORDER!
+          </motion.span>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 
-// ─── GUILTY Overlay (surrender) ───
+// ─── GUILTY Overlay (surrender / defendant KO) ───
 
 interface GuiltyOverlayProps {
   visible: boolean;
+  reason?: "surrender" | "ko";
 }
 
-export function GuiltyOverlay({ visible }: GuiltyOverlayProps) {
-  if (!visible) return null;
-
+export function GuiltyOverlay({ visible, reason = "surrender" }: GuiltyOverlayProps) {
   return (
-    <Animated.View
-      entering={FadeIn.duration(600)}
-      style={styles.guiltyOverlay}
-      pointerEvents="none"
-    >
-      <Animated.Text
-        entering={ZoomIn.delay(300).duration(400).springify()}
-        style={styles.guiltyText}
-      >
-        GUILTY
-      </Animated.Text>
-      <Animated.Text
-        entering={FadeIn.delay(1000).duration(400)}
-        style={styles.guiltySubtext}
-      >
-        The defendant has surrendered.
-      </Animated.Text>
-    </Animated.View>
+    <AnimatePresence>
+      {visible && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.6 }}
+          className="fixed inset-0 z-[200] flex flex-col items-center justify-center pointer-events-none"
+          style={{ background: "rgba(10,10,26,0.92)" }}
+        >
+          <motion.span
+            initial={{ scale: 0.3, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.3, type: "spring", duration: 0.4 }}
+            className="text-6xl md:text-7xl font-black tracking-[0.4em]"
+            style={{
+              color: "var(--guilty)",
+              textShadow: "0 0 60px rgba(220,38,38,0.6)",
+            }}
+          >
+            GUILTY
+          </motion.span>
+          <motion.span
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1, duration: 0.4 }}
+            className="text-base mt-6 tracking-wider"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            {reason === "surrender"
+              ? "The defendant has surrendered."
+              : "The prosecution's case was too strong."}
+          </motion.span>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 
-const styles = StyleSheet.create({
-  // Flash
-  fullOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: 100,
-  },
+// ─── NOT GUILTY / Victory Overlay (attorney KO) ───
 
-  // Banner
-  bannerOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 99,
-  },
-  bannerBg: {
-    backgroundColor: colors.objection,
-    paddingHorizontal: spacing.xl + 20,
-    paddingVertical: spacing.md,
-    borderRadius: 4,
-    shadowColor: colors.objection,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 30,
-    elevation: 20,
-  },
-  bannerText: {
-    fontSize: 42,
-    fontWeight: '900',
-    color: '#fff',
-    letterSpacing: 4,
-    textShadowColor: 'rgba(0,0,0,0.5)',
-    textShadowOffset: { width: 2, height: 2 },
-    textShadowRadius: 4,
-  },
+interface VictoryOverlayProps {
+  visible: boolean;
+}
 
-  // Shake
-  shakeContainer: {
-    flex: 1,
-  },
-
-  // Gavel
-  gavelOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    zIndex: 100,
-  },
-  gavelEmoji: {
-    fontSize: 80,
-  },
-  gavelText: {
-    fontSize: 32,
-    fontWeight: '900',
-    color: colors.accent,
-    letterSpacing: 6,
-    marginTop: spacing.md,
-  },
-
-  // Guilty
-  guiltyOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(10,10,26,0.92)',
-    zIndex: 200,
-  },
-  guiltyText: {
-    fontSize: 64,
-    fontWeight: '900',
-    color: colors.guilty,
-    letterSpacing: 8,
-    textShadowColor: 'rgba(220,38,38,0.6)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 30,
-  },
-  guiltySubtext: {
-    fontSize: 16,
-    color: colors.textSecondary,
-    marginTop: spacing.lg,
-    letterSpacing: 2,
-  },
-});
+export function VictoryOverlay({ visible }: VictoryOverlayProps) {
+  return (
+    <AnimatePresence>
+      {visible && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.6 }}
+          className="fixed inset-0 z-[200] flex flex-col items-center justify-center pointer-events-none"
+          style={{ background: "rgba(10,26,10,0.92)" }}
+        >
+          <motion.span
+            initial={{ scale: 0.3, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.3, type: "spring", duration: 0.4 }}
+            className="text-5xl md:text-6xl font-black tracking-[0.3em] text-center"
+            style={{
+              color: "#22c55e",
+              textShadow: "0 0 60px rgba(34,197,94,0.6)",
+            }}
+          >
+            NOT GUILTY
+          </motion.span>
+          <motion.span
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1, duration: 0.4 }}
+            className="text-base mt-6 tracking-wider"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            The prosecution&apos;s case has been demolished.
+          </motion.span>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
