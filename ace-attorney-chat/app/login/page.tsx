@@ -109,7 +109,7 @@ export default function LoginPage() {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}
         onClick={() => router.push("/")}
-        className="absolute top-6 left-6 text-xs cursor-pointer px-3.5 py-1.5 rounded-full border hover:bg-white/5 transition-all"
+        className="absolute top-6 left-6 text-xs cursor-pointer px-3.5 py-1.5 rounded-full border hover:brightness-95 transition-all"
         style={{ borderColor: "var(--chip-border)", color: "var(--text-secondary)" }}
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="inline mr-1 -mt-0.5"><path d="M19 12H5M12 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -153,7 +153,7 @@ export default function LoginPage() {
                 className="w-full py-3 rounded-full text-sm font-semibold tracking-wide cursor-pointer
                            transition-all duration-200 hover:brightness-110 active:scale-[0.98]"
                 style={{
-                  border: "1.5px solid rgba(255,255,255,0.2)",
+                  border: "1.5px solid var(--selection-border)",
                   background: "transparent",
                   color: "var(--text-primary)",
                 }}
@@ -191,7 +191,7 @@ export default function LoginPage() {
               className="rounded-2xl p-6"
               style={{
                 background: "var(--bg-light)",
-                border: "1px solid rgba(255,255,255,0.08)",
+                border: "1px solid var(--border-subtle)",
                 boxShadow: "0 8px 40px rgba(0,0,0,0.4)",
               }}
             >
@@ -202,7 +202,7 @@ export default function LoginPage() {
                 </h2>
                 <button
                   onClick={() => switchMode("idle")}
-                  className="p-1.5 -m-1 rounded-full hover:bg-white/5 cursor-pointer transition-colors"
+                  className="p-1.5 -m-1 rounded-full hover:brightness-90 cursor-pointer transition-colors"
                   style={{ color: "var(--text-muted)" }}
                 >
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
@@ -230,7 +230,7 @@ export default function LoginPage() {
                         onChange={(e) => setDisplayName(e.target.value)}
                         className="w-full rounded-xl px-4 py-3 text-[16px] border outline-none
                                    placeholder:text-[var(--text-muted)] transition-colors duration-150 mb-2.5"
-                        style={{ background: "var(--bg)", borderColor: "rgba(255,255,255,0.08)", color: "var(--text-primary)" }}
+                        style={{ background: "var(--bg)", borderColor: "var(--border-subtle)", color: "var(--text-primary)" }}
                       />
                     </motion.div>
                   )}
@@ -245,7 +245,7 @@ export default function LoginPage() {
                   required
                   className="w-full rounded-xl px-4 py-3 text-[16px] border outline-none
                              placeholder:text-[var(--text-muted)] transition-colors duration-150"
-                  style={{ background: "var(--bg)", borderColor: "rgba(255,255,255,0.08)", color: "var(--text-primary)" }}
+                  style={{ background: "var(--bg)", borderColor: "var(--border-subtle)", color: "var(--text-primary)" }}
                 />
                 <input
                   type="password"
@@ -256,7 +256,7 @@ export default function LoginPage() {
                   minLength={6}
                   className="w-full rounded-xl px-4 py-3 text-[16px] border outline-none
                              placeholder:text-[var(--text-muted)] transition-colors duration-150"
-                  style={{ background: "var(--bg)", borderColor: "rgba(255,255,255,0.08)", color: "var(--text-primary)" }}
+                  style={{ background: "var(--bg)", borderColor: "var(--border-subtle)", color: "var(--text-primary)" }}
                 />
 
                 {/* Confirm password (signup only) */}
@@ -278,7 +278,7 @@ export default function LoginPage() {
                         minLength={6}
                         className="w-full rounded-xl px-4 py-3 text-[16px] border outline-none
                                    placeholder:text-[var(--text-muted)] transition-colors duration-150"
-                        style={{ background: "var(--bg)", borderColor: "rgba(255,255,255,0.08)", color: "var(--text-primary)" }}
+                        style={{ background: "var(--bg)", borderColor: "var(--border-subtle)", color: "var(--text-primary)" }}
                       />
                     </motion.div>
                   )}

@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useEffect, useState, useRef } from "react";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { createClient } from "@/src/lib/supabase/client";
 import { HealthBarStatic } from "@/src/components/HealthBar";
@@ -11,12 +11,16 @@ import type { SavedArgument } from "@/src/state/types";
 export default function SharedArgumentViewer() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const id = params.id as string;
+  const highlightMsgId = searchParams.get("m");
   const supabase = createClient();
   const [argument, setArgument] = useState<SavedArgument | null>(null);
   const [authorName, setAuthorName] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const hasScrolled = useRef(false);
 
   useEffect(() => {
     async function load() {
@@ -66,6 +70,20 @@ export default function SharedArgumentViewer() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
+  // Scroll to highlighted message after render
+  useEffect(() => {
+    if (!argument || !highlightMsgId || hasScrolled.current) return;
+    // Small delay to let messages render
+    const timer = setTimeout(() => {
+      const el = document.getElementById(`msg-${highlightMsgId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        hasScrolled.current = true;
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [argument, highlightMsgId]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-dvh" style={{ background: "var(--bg)" }}>
@@ -102,17 +120,17 @@ export default function SharedArgumentViewer() {
       {/* Header */}
       <div
         className="flex items-center gap-3 px-5 py-3.5 shrink-0"
-        style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+        style={{ borderBottom: "1px solid var(--border-subtle)" }}
       >
         <button
           onClick={() => router.push("/")}
-          className="text-sm px-3.5 py-1.5 rounded-full border cursor-pointer hover:bg-white/5 transition-all duration-150"
+          className="text-sm px-3.5 py-1.5 rounded-full border cursor-pointer transition-all duration-150"
           style={{ borderColor: "var(--chip-border)", color: "var(--text-secondary)" }}
         >
           Home
         </button>
         <div className="flex-1 min-w-0">
-          <h1 className="text-sm font-medium text-white truncate">{argument.caseData.title}</h1>
+          <h1 className="text-sm font-medium truncate" style={{ color: "var(--text-primary)" }}>{argument.caseData.title}</h1>
           <p className="text-[11px] truncate mt-0.5" style={{ color: "var(--text-muted)" }}>
             {authorName && `by ${authorName} \u00B7 `}
             {argument.exchangeCount} rounds &middot; +{argument.score} pts
@@ -134,7 +152,7 @@ export default function SharedArgumentViewer() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         className="px-5 py-3 shrink-0"
-        style={{ background: "rgba(255,255,255,0.02)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+        style={{ background: "var(--hover-overlay)", borderBottom: "1px solid var(--border-subtle)" }}
       >
         <p className="text-xs font-medium" style={{ color: "var(--text-secondary)" }}>
           <span style={{ color: "var(--text-muted)" }}>Charged with: </span>
@@ -143,9 +161,15 @@ export default function SharedArgumentViewer() {
       </motion.div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto flex flex-col py-2">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto flex flex-col py-2">
         {argument.messages.map((msg) => (
-          <MessageBubble key={msg.id} message={msg} />
+          <MessageBubble
+            key={msg.id}
+            message={msg}
+            argumentId={argument.id}
+            isPublic={true}
+            highlighted={msg.id === highlightMsgId}
+          />
         ))}
       </div>
     </div>

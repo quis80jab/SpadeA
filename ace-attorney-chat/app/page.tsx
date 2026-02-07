@@ -93,8 +93,10 @@ export default function SplashScreen() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => router.push("/leaderboard")}
-              className="text-xs px-3 py-1.5 rounded-full border cursor-pointer hover:bg-white/5 transition-all duration-150"
-              style={{ borderColor: "var(--chip-border)", color: "var(--text-secondary)" }}
+              className="text-xs px-3 py-1.5 rounded-full border cursor-pointer transition-all duration-150"
+              style={{ borderColor: "var(--chip-border)", color: "var(--text-secondary)", background: "transparent" }}
+              onMouseEnter={(e) => e.currentTarget.style.background = "var(--hover-overlay)"}
+              onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
             >
               Leaderboard
             </button>
@@ -103,8 +105,10 @@ export default function SplashScreen() {
             {userId ? (
               <button
                 onClick={() => router.push("/profile")}
-                className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-full border cursor-pointer hover:bg-white/5 transition-all duration-150"
-                style={{ borderColor: "var(--chip-border)", color: "var(--text-secondary)" }}
+                className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-full border cursor-pointer transition-all duration-150"
+                style={{ borderColor: "var(--chip-border)", color: "var(--text-secondary)", background: "transparent" }}
+                onMouseEnter={(e) => e.currentTarget.style.background = "var(--hover-overlay)"}
+                onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
               >
                 <span
                   className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-semibold overflow-hidden"
@@ -173,7 +177,7 @@ export default function SplashScreen() {
 
       {/* Divider */}
       <div className="px-8 py-2 shrink-0">
-        <div className="h-px" style={{ background: "rgba(255,255,255,0.06)" }} />
+        <div className="h-px" style={{ background: "var(--border-subtle)" }} />
       </div>
 
       {/* History section */}

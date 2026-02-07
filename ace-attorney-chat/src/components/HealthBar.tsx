@@ -51,7 +51,7 @@ export function HealthBar({ health, lastDamageToAttorney = 0, lastDamageToDefend
   const defColor = getBarColor(health.defendantHP, health.maxHP);
 
   return (
-    <div className="flex items-center gap-3 px-5 py-2.5 shrink-0" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+    <div className="flex items-center gap-3 px-5 py-2.5 shrink-0" style={{ borderBottom: "1px solid var(--border-subtle)" }}>
       {/* Attorney bar (left, drains right-to-left) */}
       <div className="flex-1 relative">
         <div className="flex items-center justify-between mb-1">
@@ -62,7 +62,7 @@ export function HealthBar({ health, lastDamageToAttorney = 0, lastDamageToDefend
             {health.attorneyHP}
           </span>
         </div>
-        <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+        <div className="h-2 rounded-full overflow-hidden" style={{ background: "var(--bar-track)" }}>
           <motion.div
             className="h-full rounded-full"
             style={{ background: attColor, originX: 0 }}
@@ -94,7 +94,7 @@ export function HealthBar({ health, lastDamageToAttorney = 0, lastDamageToDefend
             DEFENSE
           </span>
         </div>
-        <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+        <div className="h-2 rounded-full overflow-hidden" style={{ background: "var(--bar-track)" }}>
           <motion.div
             className="h-full rounded-full ml-auto"
             style={{ background: defColor, originX: 1 }}
@@ -120,13 +120,13 @@ export function HealthBarStatic({ health }: { health: HealthState }) {
   const defColor = getBarColor(health.defendantHP, health.maxHP);
 
   return (
-    <div className="flex items-center gap-3 px-5 py-2.5" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+    <div className="flex items-center gap-3 px-5 py-2.5" style={{ borderBottom: "1px solid var(--border-subtle)" }}>
       <div className="flex-1">
         <div className="flex items-center justify-between mb-1">
           <span className="text-[10px] font-medium tracking-wider" style={{ color: "var(--primary)" }}>PROSECUTION</span>
           <span className="text-[10px] font-medium tabular-nums" style={{ color: attColor }}>{health.attorneyHP}</span>
         </div>
-        <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+        <div className="h-2 rounded-full overflow-hidden" style={{ background: "var(--bar-track)" }}>
           <div className="h-full rounded-full" style={{ background: attColor, width: `${attPct}%` }} />
         </div>
       </div>
@@ -136,7 +136,7 @@ export function HealthBarStatic({ health }: { health: HealthState }) {
           <span className="text-[10px] font-medium tabular-nums" style={{ color: defColor }}>{health.defendantHP}</span>
           <span className="text-[10px] font-medium tracking-wider" style={{ color: "var(--accent)" }}>DEFENSE</span>
         </div>
-        <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+        <div className="h-2 rounded-full overflow-hidden" style={{ background: "var(--bar-track)" }}>
           <div className="h-full rounded-full ml-auto" style={{ background: defColor, width: `${defPct}%` }} />
         </div>
       </div>

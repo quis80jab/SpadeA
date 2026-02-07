@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { useHistoryStore } from "@/src/state/historyStore";
@@ -59,6 +59,17 @@ export default function ArgumentViewer() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
+  // Make argument public (for sharing)
+  const handleMakePublic = useCallback(async () => {
+    if (!argument) return;
+    const supabase = createClient();
+    await supabase
+      .from("arguments")
+      .update({ is_public: true })
+      .eq("id", argument.id);
+    setArgument({ ...argument, is_public: true });
+  }, [argument]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-dvh" style={{ background: "var(--bg)" }}>
@@ -93,18 +104,18 @@ export default function ArgumentViewer() {
       {/* Header */}
       <div
         className="flex items-center gap-3 px-5 py-3.5 shrink-0"
-        style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+        style={{ borderBottom: "1px solid var(--border-subtle)" }}
       >
         <button
           onClick={() => router.push("/")}
-          className="text-sm px-3.5 py-1.5 rounded-full border cursor-pointer hover:bg-white/5 transition-all duration-150"
+          className="text-sm px-3.5 py-1.5 rounded-full border cursor-pointer transition-all duration-150"
           style={{ borderColor: "var(--chip-border)", color: "var(--text-secondary)" }}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="inline mr-1 -mt-0.5"><path d="M19 12H5M12 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round"/></svg>
           Back
         </button>
         <div className="flex-1 min-w-0">
-          <h1 className="text-sm font-medium text-white truncate">{argument.caseData.title}</h1>
+          <h1 className="text-sm font-medium truncate" style={{ color: "var(--text-primary)" }}>{argument.caseData.title}</h1>
           <p className="text-[11px] truncate mt-0.5" style={{ color: "var(--text-muted)" }}>
             {argument.exchangeCount} rounds &middot; +{argument.score} pts &middot; {new Date(argument.createdAt).toLocaleDateString()}
           </p>
@@ -128,7 +139,7 @@ export default function ArgumentViewer() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         className="px-5 py-3 shrink-0"
-        style={{ background: "rgba(255,255,255,0.02)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+        style={{ background: "var(--hover-overlay)", borderBottom: "1px solid var(--border-subtle)" }}
       >
         <p className="text-xs font-medium" style={{ color: "var(--text-secondary)" }}>
           <span style={{ color: "var(--text-muted)" }}>Charged with: </span>
@@ -142,7 +153,13 @@ export default function ArgumentViewer() {
       {/* Read-only messages */}
       <div className="flex-1 overflow-y-auto flex flex-col py-2">
         {argument.messages.map((msg) => (
-          <MessageBubble key={msg.id} message={msg} />
+          <MessageBubble
+            key={msg.id}
+            message={msg}
+            argumentId={argument.id}
+            isPublic={argument.is_public}
+            onMakePublic={handleMakePublic}
+          />
         ))}
       </div>
     </div>

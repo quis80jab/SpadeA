@@ -47,6 +47,11 @@
   --hold-it: #E0B97A;
   --take-that: #34D399;
   --guilty: #DC2626;
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --selection-border: rgba(255, 255, 255, 0.15);
+  --hover-overlay: rgba(255, 255, 255, 0.05);
+  --bar-track: rgba(255, 255, 255, 0.06);
+  --handle-bar: rgba(255, 255, 255, 0.15);
 }
 
 /* ─── Light mode ─── */
@@ -65,13 +70,18 @@
   --user-bubble: #ECF3F8;
   --user-text: #1A3550;
   --chip-default: #F7F7F7;
-  --chip-border: #DDDDDD;
+  --chip-border: #BBBBBB;
   --chip-text: #222222;
   --chip-surrender: #DC2626;
   --objection: #FF385C;
   --hold-it: #C4943F;
   --take-that: #059669;
   --guilty: #DC2626;
+  --border-subtle: rgba(0, 0, 0, 0.1);
+  --selection-border: rgba(0, 0, 0, 0.2);
+  --hover-overlay: rgba(0, 0, 0, 0.04);
+  --bar-track: rgba(0, 0, 0, 0.08);
+  --handle-bar: rgba(0, 0, 0, 0.12);
 }
 
 .light ::-webkit-scrollbar-thumb {
@@ -167,4 +177,24 @@ textarea:focus {
   );
   background-size: 400px 100%;
   animation: shimmer 1.5s ease-in-out infinite;
+}
+
+.light .skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.03) 25%,
+    rgba(0, 0, 0, 0.07) 50%,
+    rgba(0, 0, 0, 0.03) 75%
+  );
+  background-size: 400px 100%;
+}
+
+/* Message highlight for deep-link scroll */
+@keyframes highlight-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 56, 92, 0); }
+  50% { box-shadow: 0 0 0 4px rgba(255, 56, 92, 0.3); }
+}
+.msg-highlight {
+  animation: highlight-pulse 1s ease-in-out 3;
+  border-radius: 16px;
 }

@@ -6,22 +6,39 @@ import { Message } from "@/src/state/types";
 
 interface MessageBubbleProps {
   message: Message;
+  /** If viewing a saved argument, pass its ID for deep-link sharing */
+  argumentId?: string;
+  /** Whether the argument is currently public */
+  isPublic?: boolean;
+  /** Callback to make a private argument public (returns after Supabase update) */
+  onMakePublic?: () => Promise<void>;
+  /** Highlight this bubble (for deep-link scroll target) */
+  highlighted?: boolean;
 }
 
 const SITE_URL = "spadeattorney.netlify.app";
 const LONG_PRESS_MS = 500;
 
-export function MessageBubble({ message }: MessageBubbleProps) {
+export function MessageBubble({
+  message,
+  argumentId,
+  isPublic,
+  onMakePublic,
+  highlighted,
+}: MessageBubbleProps) {
   const isAttorney = message.sender === "attorney";
   const intensity = message.intensity ?? 1;
   const scale = intensity >= 4 ? 1 + (intensity - 4) * 0.008 : 1;
 
   const bubbleRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const pressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [showMenu, setShowMenu] = useState(false);
   const [menuPos, setMenuPos] = useState({ x: 0, y: 0 });
   const [copying, setCopying] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [showPrivacyPrompt, setShowPrivacyPrompt] = useState(false);
+  const [makingPublic, setMakingPublic] = useState(false);
 
   // Close menu on outside click
   useEffect(() => {
@@ -33,7 +50,6 @@ export function MessageBubble({ message }: MessageBubbleProps) {
 
   const openMenu = useCallback(
     (clientX: number, clientY: number) => {
-      // Position menu relative to viewport
       setMenuPos({ x: clientX, y: clientY });
       setShowMenu(true);
     },
@@ -65,7 +81,6 @@ export function MessageBubble({ message }: MessageBubbleProps) {
     }
   }, []);
 
-  // Prevent context menu default on mobile (we show our own)
   const handleContextMenu = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
@@ -74,54 +89,76 @@ export function MessageBubble({ message }: MessageBubbleProps) {
     [openMenu]
   );
 
-  // Share: download image with watermark
+  // ─── Download image with watermark ───
   const handleDownloadImage = useCallback(async () => {
     if (!bubbleRef.current || downloading) return;
     setDownloading(true);
 
     try {
-      // Dynamic import html2canvas
       const html2canvas = (await import("html2canvas")).default;
 
-      // Create a wrapper with watermark for the capture
+      // Create wrapper with constrained width for readable text
       const wrapper = document.createElement("div");
-      wrapper.style.padding = "24px";
-      wrapper.style.background = "#111111";
-      wrapper.style.borderRadius = "16px";
-      wrapper.style.display = "inline-block";
-      wrapper.style.position = "fixed";
-      wrapper.style.left = "-9999px";
-      wrapper.style.top = "0";
-      wrapper.style.fontFamily =
-        '"Berkeley Mono", system-ui, -apple-system, sans-serif';
+      wrapper.style.cssText = `
+        padding: 24px 24px 0 24px;
+        background: #111111;
+        border-radius: 16px 16px 0 0;
+        display: block;
+        position: fixed;
+        left: -9999px;
+        top: 0;
+        min-width: 320px;
+        max-width: 480px;
+        width: auto;
+        font-family: "Berkeley Mono", system-ui, -apple-system, sans-serif;
+        overflow-wrap: break-word;
+        word-break: break-word;
+      `;
 
       // Clone the bubble content
       const clone = bubbleRef.current.cloneNode(true) as HTMLElement;
+      clone.style.transform = "none";
+      clone.style.maxWidth = "100%";
       wrapper.appendChild(clone);
 
-      // Add watermark
+      // White bottom bar with URL watermark
       const watermark = document.createElement("div");
-      watermark.style.textAlign = "center";
-      watermark.style.marginTop = "16px";
-      watermark.style.paddingTop = "12px";
-      watermark.style.borderTop = "1px solid rgba(255,255,255,0.08)";
-      watermark.style.fontSize = "11px";
-      watermark.style.color = "#717171";
-      watermark.style.letterSpacing = "0.1em";
+      watermark.style.cssText = `
+        background: #ffffff;
+        margin-top: 20px;
+        padding: 12px 24px;
+        border-radius: 0 0 16px 16px;
+        text-align: center;
+        font-size: 12px;
+        font-weight: 500;
+        color: #222222;
+        letter-spacing: 0.05em;
+        font-family: "Berkeley Mono", system-ui, -apple-system, sans-serif;
+      `;
       watermark.textContent = SITE_URL;
-      wrapper.appendChild(watermark);
 
-      document.body.appendChild(wrapper);
+      // Outer container to hold both
+      const outer = document.createElement("div");
+      outer.style.cssText = `
+        position: fixed;
+        left: -9999px;
+        top: 0;
+        display: inline-block;
+        min-width: 320px;
+        max-width: 480px;
+      `;
+      outer.appendChild(wrapper);
+      outer.appendChild(watermark);
+      document.body.appendChild(outer);
 
-      const canvas = await html2canvas(wrapper, {
-        backgroundColor: "#111111",
+      const canvas = await html2canvas(outer, {
+        backgroundColor: null,
         scale: 2,
         useCORS: true,
       });
 
-      document.body.removeChild(wrapper);
+      document.body.removeChild(outer);
 
-      // Trigger download
       const link = document.createElement("a");
       link.download = `ace-attorney-${Date.now()}.png`;
       link.href = canvas.toDataURL("image/png");
@@ -134,7 +171,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
     setShowMenu(false);
   }, [downloading]);
 
-  // Copy text
+  // ─── Copy text ───
   const handleCopyText = useCallback(async () => {
     setCopying(true);
     await navigator.clipboard.writeText(message.text);
@@ -144,26 +181,73 @@ export function MessageBubble({ message }: MessageBubbleProps) {
     }, 600);
   }, [message.text]);
 
-  // Share link (copies a URL with the message text as a query param — or uses Web Share API)
+  // ─── Share link with privacy check ───
   const handleShareLink = useCallback(async () => {
-    const shareUrl = `https://${SITE_URL}`;
-    const shareText = `"${message.text.slice(0, 200)}${message.text.length > 200 ? "..." : ""}" — ${SITE_URL}`;
-
-    if (navigator.share) {
-      try {
-        await navigator.share({ text: shareText, url: shareUrl });
-      } catch {
-        // User cancelled
+    // If we have an argumentId, generate a deep link
+    if (argumentId) {
+      // Check privacy first
+      if (isPublic === false && onMakePublic) {
+        // Show privacy prompt
+        setShowMenu(false);
+        setShowPrivacyPrompt(true);
+        return;
+      }
+      // Generate deep link
+      const deepLink = `https://${SITE_URL}/a/${argumentId}?m=${message.id}`;
+      if (navigator.share) {
+        try {
+          await navigator.share({ text: `Check out this courtroom argument`, url: deepLink });
+        } catch {
+          // User cancelled
+        }
+      } else {
+        await navigator.clipboard.writeText(deepLink);
       }
     } else {
-      await navigator.clipboard.writeText(shareText);
+      // Fallback: share text only (game in progress, no saved argument)
+      const shareText = `"${message.text.slice(0, 200)}${message.text.length > 200 ? "..." : ""}" — ${SITE_URL}`;
+      if (navigator.share) {
+        try {
+          await navigator.share({ text: shareText, url: `https://${SITE_URL}` });
+        } catch {
+          // User cancelled
+        }
+      } else {
+        await navigator.clipboard.writeText(shareText);
+      }
     }
     setShowMenu(false);
-  }, [message.text]);
+  }, [message.text, message.id, argumentId, isPublic, onMakePublic]);
+
+  // ─── Handle "Make Public and Share" from privacy prompt ───
+  const handleMakePublicAndShare = useCallback(async () => {
+    if (!onMakePublic || !argumentId) return;
+    setMakingPublic(true);
+    try {
+      await onMakePublic();
+      // Now generate and share the link
+      const deepLink = `https://${SITE_URL}/a/${argumentId}?m=${message.id}`;
+      if (navigator.share) {
+        try {
+          await navigator.share({ text: `Check out this courtroom argument`, url: deepLink });
+        } catch {
+          // User cancelled
+        }
+      } else {
+        await navigator.clipboard.writeText(deepLink);
+      }
+    } catch {
+      // Failed to make public
+    }
+    setMakingPublic(false);
+    setShowPrivacyPrompt(false);
+  }, [onMakePublic, argumentId, message.id]);
 
   return (
     <>
       <motion.div
+        ref={wrapperRef}
+        id={`msg-${message.id}`}
         initial={
           isAttorney
             ? intensity >= 7
@@ -178,7 +262,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         }}
         className={`flex flex-col max-w-[82%] my-1.5 px-5 ${
           isAttorney ? "self-start" : "self-end"
-        }`}
+        } ${highlighted ? "msg-highlight" : ""}`}
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerCancel}
@@ -230,18 +314,20 @@ export function MessageBubble({ message }: MessageBubbleProps) {
             transition={{ duration: 0.15 }}
             className="fixed z-[300] rounded-2xl overflow-hidden shadow-2xl"
             style={{
-              left: Math.min(menuPos.x, window.innerWidth - 200),
-              top: Math.min(menuPos.y - 10, window.innerHeight - 200),
+              left: Math.min(menuPos.x, (typeof window !== "undefined" ? window.innerWidth : 400) - 200),
+              top: Math.min(menuPos.y - 10, (typeof window !== "undefined" ? window.innerHeight : 800) - 200),
               background: "var(--bg-card)",
-              border: "1px solid rgba(255,255,255,0.1)",
+              border: "1px solid var(--border-subtle)",
               minWidth: 180,
             }}
             onClick={(e) => e.stopPropagation()}
           >
             <button
               onClick={handleDownloadImage}
-              className="w-full flex items-center gap-3 px-4 py-3 text-sm text-left transition-colors hover:bg-white/5 cursor-pointer"
+              className="w-full flex items-center gap-3 px-4 py-3 text-sm text-left transition-colors cursor-pointer"
               style={{ color: "var(--text-primary)" }}
+              onMouseEnter={(e) => e.currentTarget.style.background = "var(--hover-overlay)"}
+              onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" strokeLinecap="round" strokeLinejoin="round"/>
@@ -250,24 +336,28 @@ export function MessageBubble({ message }: MessageBubbleProps) {
               </svg>
               {downloading ? "Saving..." : "Save as Image"}
             </button>
-            <div className="h-px" style={{ background: "rgba(255,255,255,0.06)" }} />
+            <div className="h-px" style={{ background: "var(--border-subtle)" }} />
             <button
               onClick={handleShareLink}
-              className="w-full flex items-center gap-3 px-4 py-3 text-sm text-left transition-colors hover:bg-white/5 cursor-pointer"
+              className="w-full flex items-center gap-3 px-4 py-3 text-sm text-left transition-colors cursor-pointer"
               style={{ color: "var(--text-primary)" }}
+              onMouseEnter={(e) => e.currentTarget.style.background = "var(--hover-overlay)"}
+              onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
                 <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" strokeLinecap="round"/>
                 <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" strokeLinecap="round"/>
               </svg>
-              Share
+              {argumentId ? "Share Link" : "Share"}
             </button>
-            <div className="h-px" style={{ background: "rgba(255,255,255,0.06)" }} />
+            <div className="h-px" style={{ background: "var(--border-subtle)" }} />
             <button
               onClick={handleCopyText}
-              className="w-full flex items-center gap-3 px-4 py-3 text-sm text-left transition-colors hover:bg-white/5 cursor-pointer"
+              className="w-full flex items-center gap-3 px-4 py-3 text-sm text-left transition-colors cursor-pointer"
               style={{ color: "var(--text-primary)" }}
+              onMouseEnter={(e) => e.currentTarget.style.background = "var(--hover-overlay)"}
+              onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -275,6 +365,56 @@ export function MessageBubble({ message }: MessageBubbleProps) {
               </svg>
               {copying ? "Copied" : "Copy Text"}
             </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Privacy Prompt Modal */}
+      <AnimatePresence>
+        {showPrivacyPrompt && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[400] flex items-center justify-center"
+            style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}
+            onClick={() => !makingPublic && setShowPrivacyPrompt(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 12 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="mx-6 w-full max-w-sm rounded-2xl p-6"
+              style={{ background: "var(--bg-card)", boxShadow: "0 16px 48px rgba(0,0,0,0.4)" }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="text-base font-semibold mb-2" style={{ color: "var(--text-primary)" }}>
+                This argument is private
+              </h3>
+              <p className="text-sm mb-5 leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                To share a link to this conversation, it needs to be made public. Anyone with the link will be able to view it.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowPrivacyPrompt(false)}
+                  disabled={makingPublic}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-medium cursor-pointer transition-all duration-150"
+                  style={{ color: "var(--text-muted)", border: "1px solid var(--border-subtle)" }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleMakePublicAndShare}
+                  disabled={makingPublic}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white cursor-pointer transition-all duration-200
+                             hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
+                  style={{ background: "var(--primary)" }}
+                >
+                  {makingPublic ? "Sharing..." : "Make Public & Share"}
+                </button>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

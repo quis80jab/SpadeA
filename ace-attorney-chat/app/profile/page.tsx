@@ -86,19 +86,19 @@ export default function ProfilePage() {
   return (
     <div className="flex flex-col h-dvh" style={{ background: "var(--bg)" }}>
       {/* Header */}
-      <div className="flex items-center gap-3 px-5 py-3.5 shrink-0" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+      <div className="flex items-center gap-3 px-5 py-3.5 shrink-0" style={{ borderBottom: `1px solid var(--border-subtle)` }}>
         <button
           onClick={() => router.push("/")}
-          className="text-sm px-3.5 py-1.5 rounded-full border cursor-pointer hover:bg-white/5 transition-all duration-150"
+          className="text-sm px-3.5 py-1.5 rounded-full border cursor-pointer transition-all duration-150"
           style={{ borderColor: "var(--chip-border)", color: "var(--text-secondary)" }}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="inline mr-1 -mt-0.5"><path d="M19 12H5M12 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round"/></svg>
           Back
         </button>
-        <h1 className="text-sm font-medium text-white flex-1">Profile</h1>
+        <h1 className="text-sm font-medium flex-1" style={{ color: "var(--text-primary)" }}>Profile</h1>
         <button
           onClick={() => router.push("/settings")}
-          className="text-xs px-3.5 py-1.5 rounded-full border cursor-pointer hover:bg-white/5 transition-all duration-150"
+          className="text-xs px-3.5 py-1.5 rounded-full border cursor-pointer transition-all duration-150"
           style={{ borderColor: "var(--chip-border)", color: "var(--text-secondary)" }}
         >
           Settings
@@ -125,7 +125,7 @@ export default function ProfilePage() {
               )}
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-white">{profile.display_name}</h2>
+              <h2 className="text-lg font-semibold" style={{ color: "var(--text-primary)" }}>{profile.display_name}</h2>
               <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
                 Joined {formatDate(profile.created_at)}
               </p>
@@ -145,7 +145,7 @@ export default function ProfilePage() {
                 className="rounded-xl p-3 text-center"
                 style={{ background: "var(--bg-light)" }}
               >
-                <p className="text-lg font-semibold text-white">{stat.value}</p>
+                <p className="text-lg font-semibold" style={{ color: "var(--text-primary)" }}>{stat.value}</p>
                 <p className="text-[10px] mt-0.5" style={{ color: "var(--text-muted)" }}>{stat.label}</p>
               </div>
             ))}
@@ -154,7 +154,7 @@ export default function ProfilePage() {
 
         {/* Divider */}
         <div className="px-6 pb-2">
-          <div className="h-px" style={{ background: "rgba(255,255,255,0.06)" }} />
+          <div className="h-px" style={{ background: "var(--border-subtle)" }} />
         </div>
 
         {/* Arguments list */}
@@ -176,12 +176,12 @@ export default function ProfilePage() {
                     initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.03 }}
-                    className="rounded-xl p-4 flex items-center gap-3 cursor-pointer hover:bg-white/[0.03] transition-all"
+                    className="rounded-xl p-4 flex items-center gap-3 cursor-pointer transition-all hover:brightness-[0.97]"
                     style={{ background: "var(--bg-light)" }}
                     onClick={() => router.push(`/argument/${arg.id}`)}
                   >
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-white truncate">{arg.caseData.title}</p>
+                      <p className="text-sm font-medium truncate" style={{ color: "var(--text-primary)" }}>{arg.caseData.title}</p>
                       <p className="text-[11px] mt-0.5 truncate" style={{ color: "var(--text-muted)" }}>
                         {arg.exchangeCount} rounds &middot; +{arg.score} pts
                         {arg.is_public && " \u00B7 Public"}
@@ -199,7 +199,7 @@ export default function ProfilePage() {
                           e.stopPropagation();
                           navigator.clipboard.writeText(`${window.location.origin}/a/${arg.id}`);
                         }}
-                        className="text-xs px-2.5 py-1 rounded-full border cursor-pointer hover:bg-white/5 transition-all shrink-0"
+                        className="text-xs px-2.5 py-1 rounded-full border cursor-pointer hover:brightness-95 transition-all shrink-0"
                         style={{ borderColor: "var(--chip-border)", color: "var(--text-muted)" }}
                         title="Copy share link"
                       >

@@ -23,7 +23,7 @@ export function ConversationHistory({ onViewArgument }: ConversationHistoryProps
   return (
     <div className="flex flex-col flex-1 min-h-0">
       {/* Tab bar — Airbnb underline style */}
-      <div className="flex gap-6 px-8 mb-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+      <div className="flex gap-6 px-8 mb-4" style={{ borderBottom: "1px solid var(--border-subtle)" }}>
         {(["recent", "starred"] as const).map((t) => (
           <button
             key={t}

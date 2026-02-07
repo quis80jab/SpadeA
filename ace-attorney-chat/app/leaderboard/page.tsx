@@ -61,11 +61,11 @@ export default function LeaderboardPage() {
       {/* Header */}
       <div
         className="flex items-center gap-3 px-5 py-3.5 shrink-0"
-        style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+        style={{ borderBottom: "1px solid var(--border-subtle)" }}
       >
         <button
           onClick={() => router.push("/")}
-          className="text-sm px-3.5 py-1.5 rounded-full border cursor-pointer hover:bg-white/5 transition-all duration-150"
+          className="text-sm px-3.5 py-1.5 rounded-full border cursor-pointer transition-all duration-150"
           style={{
             borderColor: "var(--chip-border)",
             color: "var(--text-secondary)",
@@ -107,7 +107,7 @@ export default function LeaderboardPage() {
               border:
                 sortBy === tab.key
                   ? "1px solid var(--primary)"
-                  : "1px solid rgba(255,255,255,0.06)",
+                  : "1px solid var(--border-subtle)",
             }}
           >
             {tab.label}
@@ -140,7 +140,7 @@ export default function LeaderboardPage() {
             {/* Column headers */}
             <div
               className="flex items-center gap-3 px-4 pb-3 mb-1"
-              style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+              style={{ borderBottom: "1px solid var(--border-subtle)" }}
             >
               <span
                 className="w-8 text-[10px] font-medium tracking-wider"

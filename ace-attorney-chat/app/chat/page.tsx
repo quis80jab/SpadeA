@@ -42,7 +42,7 @@ function CaseModal({ open, onClose }: { open: boolean; onClose: () => void }) {
     <div className="flex gap-3 mb-3">
       <span className="text-xs font-semibold shrink-0 w-7 pt-0.5" style={{ color: "var(--primary)" }}>{p.id}</span>
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-white leading-relaxed">{p.claim}</p>
+        <p className="text-sm leading-relaxed" style={{ color: "var(--text-primary)" }}>{p.claim}</p>
         <span className="text-[10px] font-medium tracking-wider" style={{ color: statusColor(p.status) }}>{p.status.toUpperCase()}</span>
       </div>
     </div>
@@ -70,11 +70,11 @@ function CaseModal({ open, onClose }: { open: boolean; onClose: () => void }) {
           >
             {/* Handle bar */}
             <div className="flex justify-center mb-4">
-              <div className="w-10 h-1 rounded-full" style={{ background: "rgba(255,255,255,0.15)" }} />
+              <div className="w-10 h-1 rounded-full" style={{ background: "var(--handle-bar)" }} />
             </div>
             <div className="flex justify-between items-center mb-5">
-              <h2 className="text-lg font-semibold text-white">Case Summary</h2>
-              <button onClick={onClose} className="text-sm p-2 cursor-pointer rounded-full hover:bg-white/5 transition-colors" style={{ color: "var(--text-muted)" }}>
+              <h2 className="text-lg font-semibold" style={{ color: "var(--text-primary)" }}>Case Summary</h2>
+              <button onClick={onClose} className="text-sm p-2 cursor-pointer rounded-full hover:brightness-90 transition-colors" style={{ color: "var(--text-muted)" }}>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
               </button>
             </div>
@@ -133,7 +133,7 @@ function EvidenceTray({
   if (available.length === 0) return null;
 
   return (
-    <div className="px-4 py-2 shrink-0" style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+    <div className="px-4 py-2 shrink-0" style={{ borderTop: "1px solid var(--border-subtle)" }}>
       <p className="text-[10px] font-medium tracking-wider uppercase mb-1.5" style={{ color: "var(--accent)" }}>
         Evidence ({available.length} remaining)
       </p>
@@ -146,9 +146,9 @@ function EvidenceTray({
             className="shrink-0 px-3.5 py-2 rounded-xl text-left transition-all duration-150
                        active:scale-[0.97] cursor-pointer disabled:cursor-not-allowed"
             style={{
-              background: card.used ? "rgba(255,255,255,0.02)" : "rgba(255,56,92,0.1)",
+              background: card.used ? "var(--hover-overlay)" : "rgba(255,56,92,0.1)",
               border: card.used
-                ? "1px solid rgba(255,255,255,0.04)"
+                ? "1px solid var(--border-subtle)"
                 : "1px solid rgba(255,56,92,0.3)",
               opacity: card.used ? 0.35 : disabled ? 0.5 : 1,
               maxWidth: 200,
@@ -317,7 +317,7 @@ export default function ChatPage() {
       const dx = e.clientX - swipeStartRef.current.x;
       const dy = e.clientY - swipeStartRef.current.y;
       swipeStartRef.current = null;
-      if (Math.abs(dx) > 100 && Math.abs(dy) < 80) { router.replace("/"); return; }
+      if (dx > 100 && Math.abs(dy) < 80) { router.replace("/"); return; }
       if (dy > 50 && Math.abs(dx) < 50) setShowCaseModal(true);
     },
     [router]
@@ -480,9 +480,14 @@ export default function ChatPage() {
       setLastDmgDef(0);
       const koPhase1 = applyDamageToOne("attorney", userDmg);
 
+      // Update case points & analysis (shared by KO and normal paths)
+      if (lawyerResp.updated_points.length > 0) updatePoints(lawyerResp.updated_points);
+      if (lawyerResp.fallacies_identified.length > 0 || lawyerResp.assumptions_challenged.length > 0) {
+        updateAnalysis(lawyerResp.fallacies_identified, lawyerResp.assumptions_challenged);
+      }
+
       if (koPhase1 !== "none") {
         // Show the attorney's final message before KO
-        if (lawyerResp.updated_points.length > 0) updatePoints(lawyerResp.updated_points);
         addMessage(lawyerResp.message, "attorney", lawyerResp.intensity_level);
         setAttorneyThinking(false);
         triggerIntensityEffects(lawyerResp.intensity_level);
@@ -493,11 +498,6 @@ export default function ChatPage() {
 
       // Brief pause to let user see their damage land
       await new Promise((r) => setTimeout(r, 600));
-
-      if (lawyerResp.updated_points.length > 0) updatePoints(lawyerResp.updated_points);
-      if (lawyerResp.fallacies_identified.length > 0 || lawyerResp.assumptions_challenged.length > 0) {
-        updateAnalysis(lawyerResp.fallacies_identified, lawyerResp.assumptions_challenged);
-      }
 
       addMessage(lawyerResp.message, "attorney", lawyerResp.intensity_level);
       setAttorneyThinking(false);
@@ -565,15 +565,15 @@ export default function ChatPage() {
     >
       <ShakeContainer shake={shakeActive} intensity={shakeIntensity}>
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3.5 shrink-0" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-          <h1 className="text-sm font-medium text-white truncate flex-1 mr-3">{caseData.title}</h1>
+        <div className="flex items-center justify-between px-5 py-3.5 shrink-0" style={{ borderBottom: "1px solid var(--border-subtle)" }}>
+          <h1 className="text-sm font-medium truncate flex-1 mr-3" style={{ color: "var(--text-primary)" }}>{caseData.title}</h1>
           <div className="flex items-center gap-3">
             <span className="text-xs font-medium tabular-nums" style={{ color: "var(--text-muted)" }}>
               Round {exchangeCount}
             </span>
             <button
               onClick={() => setShowCaseModal(true)}
-              className="text-xs px-3.5 py-1.5 rounded-full border cursor-pointer hover:bg-white/5 transition-all duration-150"
+              className="text-xs px-3.5 py-1.5 rounded-full border cursor-pointer transition-all duration-150"
               style={{ borderColor: "var(--chip-border)", color: "var(--text-secondary)" }}
             >
               Case Details
@@ -584,7 +584,7 @@ export default function ChatPage() {
         {/* Issue Banner */}
         <div
           className="px-5 py-3 shrink-0"
-          style={{ background: "rgba(255,255,255,0.02)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+          style={{ background: "var(--hover-overlay)", borderBottom: "1px solid var(--border-subtle)" }}
         >
           <p className="text-xs font-medium" style={{ color: "var(--text-secondary)" }}>
             <span style={{ color: "var(--text-muted)" }}>Charged with: </span>
@@ -634,7 +634,7 @@ export default function ChatPage() {
 
         {/* Custom input */}
         {!gameOver && (
-          <div className="flex items-center gap-3 px-5 py-3 shrink-0" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+          <div className="flex items-center gap-3 px-5 py-3 shrink-0" style={{ borderTop: "1px solid var(--border-subtle)" }}>
             <input
               type="text"
               placeholder="Type your own argument..."
@@ -644,7 +644,7 @@ export default function ChatPage() {
               disabled={busy}
               className="flex-1 rounded-xl px-4 py-3 text-sm border outline-none disabled:opacity-50
                          placeholder:text-[var(--text-muted)] transition-colors duration-150"
-              style={{ background: "var(--bg-light)", borderColor: "rgba(255,255,255,0.08)", color: "var(--text-primary)" }}
+              style={{ background: "var(--bg-light)", borderColor: "var(--border-subtle)", color: "var(--text-primary)" }}
             />
             <button
               onClick={handleSendCustom}

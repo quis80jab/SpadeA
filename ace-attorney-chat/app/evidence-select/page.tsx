@@ -75,7 +75,7 @@ export default function EvidenceSelectPage() {
 
       {/* Divider */}
       <div className="px-8 py-2 shrink-0">
-        <div className="h-px" style={{ background: "rgba(255,255,255,0.06)" }} />
+        <div className="h-px" style={{ background: "var(--border-subtle)" }} />
       </div>
 
       {/* Card grid */}
@@ -98,7 +98,7 @@ export default function EvidenceSelectPage() {
                     background: isSelected ? "rgba(255,56,92,0.12)" : "var(--bg-light)",
                     border: isSelected
                       ? "1.5px solid var(--primary)"
-                      : "1.5px solid rgba(255,255,255,0.06)",
+                      : "1.5px solid var(--border-subtle)",
                     opacity: isDisabled ? 0.4 : 1,
                   }}
                 >
@@ -107,7 +107,7 @@ export default function EvidenceSelectPage() {
                     <div
                       className="shrink-0 w-9 h-9 rounded-lg flex items-center justify-center text-xs font-bold"
                       style={{
-                        background: isSelected ? "var(--primary)" : "rgba(255,255,255,0.06)",
+                        background: isSelected ? "var(--primary)" : "var(--border-subtle)",
                         color: isSelected ? "white" : "var(--text-muted)",
                       }}
                     >

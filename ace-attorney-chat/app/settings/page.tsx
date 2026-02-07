@@ -224,11 +224,11 @@ export default function SettingsPage() {
       {/* Header */}
       <div
         className="flex items-center gap-3 px-5 py-3.5 shrink-0"
-        style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+        style={{ borderBottom: "1px solid var(--border-subtle)" }}
       >
         <button
           onClick={() => router.push("/profile")}
-          className="text-sm px-3.5 py-1.5 rounded-full border cursor-pointer hover:bg-white/5 transition-all duration-150"
+          className="text-sm px-3.5 py-1.5 rounded-full border cursor-pointer transition-all duration-150"
           style={{
             borderColor: "var(--chip-border)",
             color: "var(--text-secondary)",
@@ -269,7 +269,7 @@ export default function SettingsPage() {
               className="relative w-20 h-20 rounded-full overflow-hidden cursor-pointer group transition-all duration-200"
               style={{
                 background: "var(--bg-card)",
-                border: "2px solid rgba(255,255,255,0.1)",
+                border: "2px solid var(--border-subtle)",
               }}
             >
               {avatarUrl ? (
@@ -350,7 +350,7 @@ export default function SettingsPage() {
                     ? "var(--primary)"
                     : nameAvailable === true
                     ? "var(--take-that)"
-                    : "rgba(255,255,255,0.08)",
+                    : "var(--border-subtle)",
                 color: "var(--text-primary)",
               }}
             />
@@ -397,7 +397,7 @@ export default function SettingsPage() {
                   style={{
                     background:
                       theme === t
-                        ? "rgba(255,255,255,0.1)"
+                        ? "var(--hover-overlay)"
                         : "var(--bg-light)",
                     color:
                       theme === t
@@ -405,8 +405,8 @@ export default function SettingsPage() {
                         : "var(--text-muted)",
                     border:
                       theme === t
-                        ? "1px solid rgba(255,255,255,0.15)"
-                        : "1px solid transparent",
+                        ? "1.5px solid var(--selection-border)"
+                        : "1.5px solid transparent",
                   }}
                 >
                   {t === "dark" ? "Dark" : "Light"}
@@ -435,7 +435,7 @@ export default function SettingsPage() {
                   style={{
                     background:
                       publicByDefault === opt.value
-                        ? "rgba(255,255,255,0.1)"
+                        ? "var(--hover-overlay)"
                         : "var(--bg-light)",
                     color:
                       publicByDefault === opt.value
@@ -443,8 +443,8 @@ export default function SettingsPage() {
                         : "var(--text-muted)",
                     border:
                       publicByDefault === opt.value
-                        ? "1px solid rgba(255,255,255,0.15)"
-                        : "1px solid transparent",
+                        ? "1.5px solid var(--selection-border)"
+                        : "1.5px solid transparent",
                   }}
                 >
                   {opt.label}
@@ -481,13 +481,13 @@ export default function SettingsPage() {
           {/* Divider */}
           <div
             className="h-px"
-            style={{ background: "rgba(255,255,255,0.06)" }}
+            style={{ background: "var(--border-subtle)" }}
           />
 
           {/* Sign Out */}
           <button
             onClick={handleSignOut}
-            className="w-full py-3 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer hover:bg-white/5"
+            className="w-full py-3 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer hover:brightness-95"
             style={{
               color: "var(--primary)",
               border: "1px solid rgba(255,56,92,0.2)",
