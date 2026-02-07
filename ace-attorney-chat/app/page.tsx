@@ -15,6 +15,7 @@ export default function SplashScreen() {
   const [error, setError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   const { initCase, setGeneratingCase, reset } = useArgumentStore();
   const { setUserId: setHistoryUserId, hydrate } = useHistoryStore();
@@ -32,11 +33,13 @@ export default function SplashScreen() {
         // Get display name
         const { data } = await supabase
           .from("profiles")
-          .select("display_name")
+          .select("display_name, avatar_url")
           .eq("id", user.id)
           .single();
         if (data) {
-          setDisplayName((data as { display_name: string }).display_name);
+          const d = data as { display_name: string; avatar_url: string | null };
+          setDisplayName(d.display_name);
+          setAvatarUrl(d.avatar_url);
         }
       }
 
@@ -104,10 +107,15 @@ export default function SplashScreen() {
                 style={{ borderColor: "var(--chip-border)", color: "var(--text-secondary)" }}
               >
                 <span
-                  className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-semibold"
+                  className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-semibold overflow-hidden"
                   style={{ background: "var(--bg-card)", color: "var(--primary)" }}
                 >
-                  {(displayName ?? "?").charAt(0).toUpperCase()}
+                  {avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    (displayName ?? "?").charAt(0).toUpperCase()
+                  )}
                 </span>
                 {displayName ?? "Profile"}
               </button>

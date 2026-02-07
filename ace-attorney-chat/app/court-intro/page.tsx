@@ -79,47 +79,50 @@ export default function CourtIntro() {
 
   return (
     <div
-      className="flex flex-col items-center justify-center h-dvh p-8 select-none"
+      className="flex flex-col h-dvh select-none"
       style={{ background: "var(--bg)" }}
     >
-      <div className="flex flex-col items-center gap-7 max-w-lg">
-        <AnimatePresence>
-          {lines.slice(0, visibleLines).map((line, idx) => (
-            <motion.div
-              key={idx}
-              initial={line.style === "title" ? { opacity: 0, scale: 0.95 } : { opacity: 0, y: 16 }}
-              animate={line.style === "title" ? { opacity: 1, scale: 1 } : { opacity: 1, y: 0 }}
-              transition={{
-                duration: line.style === "title" ? 0.6 : 0.5,
-                type: line.style === "title" ? "spring" : "tween",
-              }}
-              className="text-center"
-            >
-              <p className={styleMap[line.style]} style={{ color: colorMap[line.style] }}>
-                {line.text}
-              </p>
-              {line.style === "title" && (
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: 64 }}
-                  transition={{ delay: 0.3, duration: 0.4 }}
-                  className="h-[2px] mx-auto mt-3 rounded-full"
-                  style={{ background: "var(--primary)" }}
-                />
-              )}
-            </motion.div>
-          ))}
-        </AnimatePresence>
+      {/* Text content — centered in available space */}
+      <div className="flex-1 flex flex-col items-center justify-center px-8">
+        <div className="flex flex-col items-center gap-7 max-w-lg">
+          <AnimatePresence>
+            {lines.slice(0, visibleLines).map((line, idx) => (
+              <motion.div
+                key={idx}
+                initial={line.style === "title" ? { opacity: 0, scale: 0.95 } : { opacity: 0, y: 16 }}
+                animate={line.style === "title" ? { opacity: 1, scale: 1 } : { opacity: 1, y: 0 }}
+                transition={{
+                  duration: line.style === "title" ? 0.6 : 0.5,
+                  type: line.style === "title" ? "spring" : "tween",
+                }}
+                className="text-center"
+              >
+                <p className={styleMap[line.style]} style={{ color: colorMap[line.style] }}>
+                  {line.text}
+                </p>
+                {line.style === "title" && (
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: 64 }}
+                    transition={{ delay: 0.3, duration: 0.4 }}
+                    className="h-[2px] mx-auto mt-3 rounded-full"
+                    style={{ background: "var(--primary)" }}
+                  />
+                )}
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
       </div>
 
-      {/* Begin Trial button — appears after all lines are revealed */}
+      {/* Begin Trial button — pinned to bottom with proper spacing */}
       <AnimatePresence>
         {allRevealed && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
-            className="absolute bottom-16"
+            className="shrink-0 flex justify-center px-8 pb-12 pt-6"
           >
             <button
               onClick={handleBeginTrial}

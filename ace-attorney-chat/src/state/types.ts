@@ -155,6 +155,7 @@ export interface SavedArgument {
 export interface UserProfile {
   id: string;
   display_name: string;
+  avatar_url: string | null;
   wins: number;
   losses: number;
   total_score: number;

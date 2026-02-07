@@ -9,6 +9,7 @@
 CREATE TABLE public.profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   display_name TEXT NOT NULL DEFAULT '',
+  avatar_url TEXT,
   wins INTEGER NOT NULL DEFAULT 0,
   losses INTEGER NOT NULL DEFAULT 0,
   total_score INTEGER NOT NULL DEFAULT 0,
@@ -17,6 +18,9 @@ CREATE TABLE public.profiles (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Add unique constraint on display_name so usernames aren't reissued
+CREATE UNIQUE INDEX idx_profiles_display_name ON public.profiles(display_name);
 
 -- ─── Arguments table ───
 -- Stores completed game sessions

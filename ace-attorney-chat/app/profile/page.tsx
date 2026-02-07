@@ -114,10 +114,15 @@ export default function ProfilePage() {
         >
           <div className="flex items-center gap-4 mb-6">
             <div
-              className="w-14 h-14 rounded-full flex items-center justify-center text-xl font-semibold"
+              className="w-14 h-14 rounded-full flex items-center justify-center text-xl font-semibold overflow-hidden"
               style={{ background: "var(--bg-card)", color: "var(--primary)" }}
             >
-              {profile.display_name.charAt(0).toUpperCase()}
+              {profile.avatar_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                profile.display_name.charAt(0).toUpperCase()
+              )}
             </div>
             <div>
               <h2 className="text-lg font-semibold text-white">{profile.display_name}</h2>

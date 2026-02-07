@@ -187,6 +187,10 @@ export default function ChatPage() {
   const [lastDmgAtt, setLastDmgAtt] = useState(0);
   const [lastDmgDef, setLastDmgDef] = useState(0);
 
+  // Post-game signup prompt (non-logged-in users)
+  const [showSignupPrompt, setShowSignupPrompt] = useState(false);
+  const [gameResult, setGameResult] = useState<"won" | "lost" | null>(null);
+
   // Intensity effects
   const [showFlash, setShowFlash] = useState(false);
   const [flashColor, setFlashColor] = useState("rgba(255,255,255,0.9)");
@@ -313,7 +317,7 @@ export default function ChatPage() {
       const dx = e.clientX - swipeStartRef.current.x;
       const dy = e.clientY - swipeStartRef.current.y;
       swipeStartRef.current = null;
-      if (dx > 100 && Math.abs(dy) < 80) { router.replace("/"); return; }
+      if (Math.abs(dx) > 100 && Math.abs(dy) < 80) { router.replace("/"); return; }
       if (dy > 50 && Math.abs(dx) < 50) setShowCaseModal(true);
     },
     [router]
@@ -354,30 +358,37 @@ export default function ChatPage() {
       setSuggestions([]);
       await new Promise((r) => setTimeout(r, 800));
 
+      const outcome = result === "attorney_ko" ? "won" : "lost";
+
       if (result === "attorney_ko") {
-        // User wins!
         setShowVictory(true);
         triggerIntensityEffects(10);
-        await saveToHistory("won");
-        persist();
-        setTimeout(() => {
-          setOutcome("won");
-          setShowVictory(false);
-          router.replace("/");
-        }, 3500);
       } else {
-        // User loses
         setGuiltyReason("ko");
         setShowGuilty(true);
         triggerIntensityEffects(10);
-        await saveToHistory("lost");
-        persist();
-        setTimeout(() => {
-          setOutcome("lost");
-          setShowGuilty(false);
-          router.replace("/");
-        }, 3500);
       }
+
+      await saveToHistory(outcome);
+      persist();
+
+      // Check if user is logged in
+      const supabaseClient = createClient();
+      const { data: { user } } = await supabaseClient.auth.getUser();
+
+      setTimeout(() => {
+        setShowVictory(false);
+        setShowGuilty(false);
+        setOutcome(outcome);
+
+        if (!user) {
+          // Show signup prompt for non-logged-in users
+          setGameResult(outcome);
+          setShowSignupPrompt(true);
+        } else {
+          router.replace("/");
+        }
+      }, 3500);
     },
     [triggerIntensityEffects, saveToHistory, persist, setOutcome, setSuggestions, router]
   );
@@ -659,6 +670,55 @@ export default function ChatPage() {
 
       {/* Case Modal */}
       <CaseModal open={showCaseModal} onClose={() => setShowCaseModal(false)} />
+
+      {/* Signup Prompt for non-logged-in users after game ends */}
+      <AnimatePresence>
+        {showSignupPrompt && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] flex items-center justify-center"
+            style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="mx-6 w-full max-w-sm rounded-3xl p-8 text-center"
+              style={{ background: "var(--bg-card)", boxShadow: "0 24px 64px rgba(0,0,0,0.5)" }}
+            >
+              <div className="text-4xl mb-4">
+                {gameResult === "won" ? "🏆" : "⚖️"}
+              </div>
+              <h2 className="text-xl font-semibold mb-2" style={{ color: "var(--text-primary)" }}>
+                {gameResult === "won" ? "You Won!" : "Case Lost"}
+              </h2>
+              <p className="text-sm mb-6 leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                {gameResult === "won"
+                  ? "Save your victory, climb the leaderboard, and challenge friends by creating an account."
+                  : "Track your progress, improve your win rate, and compete with friends by creating an account."}
+              </p>
+              <button
+                onClick={() => router.push("/login")}
+                className="w-full py-3 rounded-full text-white text-sm font-semibold tracking-widest
+                           transition-all duration-200 hover:brightness-110 active:scale-[0.98] cursor-pointer mb-3"
+                style={{ background: "var(--primary)", boxShadow: "0 4px 20px rgba(255,56,92,0.3)" }}
+              >
+                CREATE ACCOUNT
+              </button>
+              <button
+                onClick={() => { setShowSignupPrompt(false); router.replace("/"); }}
+                className="w-full py-2.5 text-sm font-medium cursor-pointer transition-all duration-150 hover:opacity-80"
+                style={{ color: "var(--text-muted)" }}
+              >
+                Maybe Later
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
