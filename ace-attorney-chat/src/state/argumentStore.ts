@@ -9,6 +9,7 @@ import {
   PointUpdate,
   FallacyEntry,
   AssumptionEntry,
+  EvidenceCard,
 } from './types';
 import {
   applyPointUpdates,
@@ -36,6 +37,11 @@ interface ArgumentActions {
   setSuggestionsLoading: (v: boolean) => void;
   setOutcome: (outcome: 'won' | 'lost') => void;
   applyDamage: (toAttorney: number, toDefendant: number) => 'none' | 'attorney_ko' | 'defendant_ko';
+  applyDamageToOne: (target: 'attorney' | 'defendant', amount: number) => 'none' | 'attorney_ko' | 'defendant_ko';
+  // Evidence cards
+  evidenceCards: EvidenceCard[];
+  selectEvidenceCards: (ids: string[]) => void;
+  useEvidenceCard: (id: string) => void;
   persist: () => void;
   hydrate: () => void;
 }
@@ -49,6 +55,7 @@ const initialState: ArgumentState = {
   health: { ...DEFAULT_HEALTH },
   messages: [],
   suggestions: [],
+  evidenceCards: [],
   exchangeCount: 0,
   isGeneratingCase: false,
   isAttorneyThinking: false,
@@ -80,6 +87,7 @@ export const useArgumentStore = create<ArgumentState & ArgumentActions>((set, ge
       health: { ...DEFAULT_HEALTH },
       messages: [],
       suggestions: [],
+      evidenceCards: [],
       exchangeCount: 0,
       outcome: null,
       phase: 'intro',
@@ -148,6 +156,40 @@ export const useArgumentStore = create<ArgumentState & ArgumentActions>((set, ge
     return 'none';
   },
 
+  applyDamageToOne: (target: 'attorney' | 'defendant', amount: number) => {
+    const state = get();
+    if (target === 'attorney') {
+      const newHP = Math.max(0, state.health.attorneyHP - amount);
+      set({ health: { ...state.health, attorneyHP: newHP } });
+      if (newHP <= 0) return 'attorney_ko';
+    } else {
+      const newHP = Math.max(0, state.health.defendantHP - amount);
+      set({ health: { ...state.health, defendantHP: newHP } });
+      if (newHP <= 0) return 'defendant_ko';
+    }
+    return 'none';
+  },
+
+  // Evidence cards
+  evidenceCards: [],
+
+  selectEvidenceCards: (ids: string[]) => {
+    const state = get();
+    if (!state.caseData) return;
+    const cards: EvidenceCard[] = state.caseData.defendant_points
+      .filter((p) => ids.includes(p.id))
+      .map((p) => ({ id: p.id, claim: p.claim, evidence: p.evidence, used: false }));
+    set({ evidenceCards: cards });
+  },
+
+  useEvidenceCard: (id: string) => {
+    set((state) => ({
+      evidenceCards: state.evidenceCards.map((c) =>
+        c.id === id ? { ...c, used: true } : c
+      ),
+    }));
+  },
+
   persist: () => {
     try {
       const state = get();
@@ -160,6 +202,7 @@ export const useArgumentStore = create<ArgumentState & ArgumentActions>((set, ge
         health: state.health,
         messages: state.messages,
         suggestions: state.suggestions,
+        evidenceCards: state.evidenceCards,
         exchangeCount: state.exchangeCount,
         isGeneratingCase: false,
         isAttorneyThinking: false,

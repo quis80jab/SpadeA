@@ -20,7 +20,7 @@ import {
   VictoryOverlay,
 } from "@/src/components/IntensityEffects";
 import { createClient } from "@/src/lib/supabase/client";
-import type { SuggestedReply, CasePoint } from "@/src/state/types";
+import type { SuggestedReply, CasePoint, EvidenceCard } from "@/src/state/types";
 
 // ─── Case Summary Modal ───
 
@@ -118,6 +118,61 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
+// ─── Evidence Card Tray ───
+
+function EvidenceTray({
+  cards,
+  onDeploy,
+  disabled,
+}: {
+  cards: EvidenceCard[];
+  onDeploy: (card: EvidenceCard) => void;
+  disabled: boolean;
+}) {
+  const available = cards.filter((c) => !c.used);
+  if (available.length === 0) return null;
+
+  return (
+    <div className="px-4 py-2 shrink-0" style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+      <p className="text-[10px] font-medium tracking-wider uppercase mb-1.5" style={{ color: "var(--accent)" }}>
+        Evidence ({available.length} remaining)
+      </p>
+      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+        {cards.map((card) => (
+          <button
+            key={card.id}
+            onClick={() => !card.used && !disabled && onDeploy(card)}
+            disabled={card.used || disabled}
+            className="shrink-0 px-3.5 py-2 rounded-xl text-left transition-all duration-150
+                       active:scale-[0.97] cursor-pointer disabled:cursor-not-allowed"
+            style={{
+              background: card.used ? "rgba(255,255,255,0.02)" : "rgba(255,56,92,0.1)",
+              border: card.used
+                ? "1px solid rgba(255,255,255,0.04)"
+                : "1px solid rgba(255,56,92,0.3)",
+              opacity: card.used ? 0.35 : disabled ? 0.5 : 1,
+              maxWidth: 200,
+            }}
+          >
+            <span
+              className="text-[10px] font-bold block"
+              style={{ color: card.used ? "var(--text-muted)" : "var(--primary)" }}
+            >
+              {card.id} {card.used && "— USED"}
+            </span>
+            <span
+              className="text-[11px] leading-tight block mt-0.5 line-clamp-2"
+              style={{ color: card.used ? "var(--text-muted)" : "var(--text-secondary)" }}
+            >
+              {card.claim}
+            </span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Chat Page ───
 
 export default function ChatPage() {
@@ -151,6 +206,7 @@ export default function ChatPage() {
     caseData,
     messages,
     suggestions,
+    evidenceCards,
     exchangeCount,
     health,
     isAttorneyThinking,
@@ -160,11 +216,12 @@ export default function ChatPage() {
     incrementExchange,
     updatePoints,
     updateAnalysis,
-    applyDamage,
+    applyDamageToOne,
     setAttorneyThinking,
     setSuggestionsLoading,
     setPhase,
     setOutcome,
+    useEvidenceCard,
     persist,
   } = useArgumentStore();
 
@@ -361,6 +418,17 @@ export default function ChatPage() {
     setSuggestions([]);
     setCustomText("");
 
+    // Check if user deployed evidence — look for evidence card IDs in the message
+    let evidenceBonus = 0;
+    const availableCards = useArgumentStore.getState().evidenceCards.filter((c) => !c.used);
+    for (const card of availableCards) {
+      if (text.toUpperCase().includes(card.id)) {
+        useEvidenceCard(card.id);
+        evidenceBonus += 10;
+        break; // one card per message
+      }
+    }
+
     if (isSurrender) {
       setPhase("surrender");
       await new Promise((r) => setTimeout(r, 2000));
@@ -390,10 +458,30 @@ export default function ChatPage() {
       return;
     }
 
-    // Normal flow
+    // Normal flow — two-phase damage: user's attack lands first, then attorney counters
     setAttorneyThinking(true);
     try {
       const lawyerResp = await getLawyerResponse(text);
+
+      // Phase 1: User's argument damages the attorney
+      const userDmg = lawyerResp.damage_to_attorney + evidenceBonus;
+      setLastDmgAtt(userDmg);
+      setLastDmgDef(0);
+      const koPhase1 = applyDamageToOne("attorney", userDmg);
+
+      if (koPhase1 !== "none") {
+        // Show the attorney's final message before KO
+        if (lawyerResp.updated_points.length > 0) updatePoints(lawyerResp.updated_points);
+        addMessage(lawyerResp.message, "attorney", lawyerResp.intensity_level);
+        setAttorneyThinking(false);
+        triggerIntensityEffects(lawyerResp.intensity_level);
+        await handleKO(koPhase1);
+        setBusy(false);
+        return;
+      }
+
+      // Brief pause to let user see their damage land
+      await new Promise((r) => setTimeout(r, 600));
 
       if (lawyerResp.updated_points.length > 0) updatePoints(lawyerResp.updated_points);
       if (lawyerResp.fallacies_identified.length > 0 || lawyerResp.assumptions_challenged.length > 0) {
@@ -404,13 +492,14 @@ export default function ChatPage() {
       setAttorneyThinking(false);
       triggerIntensityEffects(lawyerResp.intensity_level);
 
-      // Apply health damage
-      setLastDmgAtt(lawyerResp.damage_to_attorney);
+      // Phase 2: Attorney's counter-argument damages the defendant
+      await new Promise((r) => setTimeout(r, 400));
+      setLastDmgAtt(0);
       setLastDmgDef(lawyerResp.damage_to_defendant);
-      const koResult = applyDamage(lawyerResp.damage_to_attorney, lawyerResp.damage_to_defendant);
+      const koPhase2 = applyDamageToOne("defendant", lawyerResp.damage_to_defendant);
 
-      if (koResult !== "none") {
-        await handleKO(koResult);
+      if (koPhase2 !== "none") {
+        await handleKO(koPhase2);
         setBusy(false);
         return;
       }
@@ -510,6 +599,17 @@ export default function ChatPage() {
           {isAttorneyThinking && <TypingIndicator />}
           <div ref={messagesEndRef} />
         </div>
+
+        {/* Evidence Card Tray */}
+        {!gameOver && evidenceCards.filter((c) => !c.used).length > 0 && (
+          <EvidenceTray
+            cards={evidenceCards}
+            onDeploy={(card) => {
+              handleUserMessage(`TAKE THAT! I present ${card.id} — ${card.claim}! The evidence clearly shows: ${card.evidence}`);
+            }}
+            disabled={busy}
+          />
+        )}
 
         {/* Suggestion Carousel */}
         {!gameOver && (

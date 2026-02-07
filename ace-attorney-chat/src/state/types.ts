@@ -55,6 +55,15 @@ export interface HealthState {
   maxHP: number;
 }
 
+// ─── Evidence Card ───
+
+export interface EvidenceCard {
+  id: string;           // matches CasePoint.id (e.g. "D1")
+  claim: string;        // from defendant_points
+  evidence: string;     // the evidence detail
+  used: boolean;        // consumed after use
+}
+
 // ─── Defendant Agent Output ───
 
 export type SuggestionType = 'objection' | 'evidence' | 'dramatic' | 'strategic' | 'surrender';
@@ -117,6 +126,7 @@ export interface ArgumentState {
   health: HealthState;
   messages: Message[];
   suggestions: SuggestedReply[];
+  evidenceCards: EvidenceCard[];
   exchangeCount: number;
   isGeneratingCase: boolean;
   isAttorneyThinking: boolean;

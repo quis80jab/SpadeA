@@ -56,8 +56,7 @@ export default function CourtIntro() {
   }, [caseData]);
 
   const handleBeginTrial = () => {
-    setPhase("chat");
-    router.push("/chat");
+    router.push("/evidence-select");
   };
 
   if (!caseData) return null;
