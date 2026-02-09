@@ -1,0 +1,200 @@
+@import "tailwindcss";
+
+/* Berkeley Mono — loaded from local install with Geist fallback */
+@font-face {
+  font-family: "Berkeley Mono";
+  src: local("Berkeley Mono"), local("BerkeleyMono-Regular"), local("BerkeleyMono");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Berkeley Mono";
+  src: local("Berkeley Mono Medium"), local("BerkeleyMono-Medium");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Berkeley Mono";
+  src: local("Berkeley Mono Bold"), local("BerkeleyMono-Bold");
+  font-weight: 600 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --bg: #111111;
+  --bg-light: #1a1a1a;
+  --bg-card: #222222;
+  --primary: #FF385C;
+  --primary-dark: #E0294A;
+  --accent: #E0B97A;
+  --text-primary: #F7F7F7;
+  --text-secondary: #B0B0B0;
+  --text-muted: #717171;
+  --attorney-bubble: #1E1E2A;
+  --attorney-text: #E0D4F0;
+  --user-bubble: #1A2530;
+  --user-text: #D0E4F5;
+  --chip-default: #1F1F1F;
+  --chip-border: #333333;
+  --chip-text: #E0E0E0;
+  --chip-surrender: #DC2626;
+  --objection: #FF385C;
+  --hold-it: #E0B97A;
+  --take-that: #34D399;
+  --guilty: #DC2626;
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --selection-border: rgba(255, 255, 255, 0.15);
+  --hover-overlay: rgba(255, 255, 255, 0.05);
+  --bar-track: rgba(255, 255, 255, 0.06);
+  --handle-bar: rgba(255, 255, 255, 0.15);
+}
+
+/* ─── Light mode ─── */
+.light {
+  --bg: #FFFFFF;
+  --bg-light: #F7F7F7;
+  --bg-card: #EFEFEF;
+  --primary: #FF385C;
+  --primary-dark: #E0294A;
+  --accent: #C4943F;
+  --text-primary: #222222;
+  --text-secondary: #484848;
+  --text-muted: #717171;
+  --attorney-bubble: #F0ECF5;
+  --attorney-text: #3B2D5E;
+  --user-bubble: #ECF3F8;
+  --user-text: #1A3550;
+  --chip-default: #F7F7F7;
+  --chip-border: #BBBBBB;
+  --chip-text: #222222;
+  --chip-surrender: #DC2626;
+  --objection: #FF385C;
+  --hold-it: #C4943F;
+  --take-that: #059669;
+  --guilty: #DC2626;
+  --border-subtle: rgba(0, 0, 0, 0.1);
+  --selection-border: rgba(0, 0, 0, 0.2);
+  --hover-overlay: rgba(0, 0, 0, 0.04);
+  --bar-track: rgba(0, 0, 0, 0.08);
+  --handle-bar: rgba(0, 0, 0, 0.12);
+}
+
+.light ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+}
+.light ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.18);
+}
+.light input:focus,
+.light textarea:focus {
+  border-color: rgba(0, 0, 0, 0.2) !important;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: "Berkeley Mono", var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+  height: 100dvh;
+  letter-spacing: -0.01em;
+}
+
+#__next {
+  height: 100dvh;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+/* Prevent iOS zoom on input focus (font-size must be >= 16px) */
+@supports (-webkit-touch-callout: none) {
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+}
+
+/* Focus ring for inputs */
+input:focus,
+textarea:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Hide scrollbar on suggestion carousel */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Shimmer animation for skeleton chips */
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: 200px 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 25%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.03) 75%
+  );
+  background-size: 400px 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+.light .skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.03) 25%,
+    rgba(0, 0, 0, 0.07) 50%,
+    rgba(0, 0, 0, 0.03) 75%
+  );
+  background-size: 400px 100%;
+}
+
+/* Message highlight for deep-link scroll */
+@keyframes highlight-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 56, 92, 0); }
+  50% { box-shadow: 0 0 0 4px rgba(255, 56, 92, 0.3); }
+}
+.msg-highlight {
+  animation: highlight-pulse 1s ease-in-out 3;
+  border-radius: 16px;
+}

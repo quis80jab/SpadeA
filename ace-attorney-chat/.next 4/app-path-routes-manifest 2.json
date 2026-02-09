@@ -1,0 +1,17 @@
+{
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/a/[id]/page": "/a/[id]",
+  "/api/agent/route": "/api/agent",
+  "/argument/[id]/page": "/argument/[id]",
+  "/auth/callback/route": "/auth/callback",
+  "/chat/page": "/chat",
+  "/court-intro/page": "/court-intro",
+  "/evidence-select/page": "/evidence-select",
+  "/favicon.ico/route": "/favicon.ico",
+  "/leaderboard/page": "/leaderboard",
+  "/login/page": "/login",
+  "/page": "/",
+  "/profile/page": "/profile",
+  "/settings/page": "/settings"
+}
