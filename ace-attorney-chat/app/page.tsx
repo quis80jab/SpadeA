@@ -7,6 +7,8 @@ import { useArgumentStore } from "@/src/state/argumentStore";
 import { useHistoryStore } from "@/src/state/historyStore";
 import { generateCase } from "@/src/agents/caseCreator";
 import { ConversationHistory } from "@/src/components/ConversationHistory";
+import { TutorialModal } from "@/src/components/TutorialModal";
+import { CaseLoadingAnimation } from "@/src/components/CaseLoadingAnimation";
 import { createClient } from "@/src/lib/supabase/client";
 
 export default function SplashScreen() {
@@ -16,8 +18,10 @@ export default function SplashScreen() {
   const [userId, setUserId] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [resumableCase, setResumableCase] = useState<{ title: string; exchangeCount: number } | null>(null);
+  const [showTutorial, setShowTutorial] = useState(false);
 
-  const { initCase, setGeneratingCase, reset } = useArgumentStore();
+  const { initCase, setGeneratingCase, reset, clearPersisted } = useArgumentStore();
   const { setUserId: setHistoryUserId, hydrate } = useHistoryStore();
 
   // Check auth state and hydrate history
@@ -44,17 +48,33 @@ export default function SplashScreen() {
       }
 
       await hydrate();
+
+      // Check for an in-progress game in localStorage
+      try {
+        const raw = localStorage.getItem("ace_attorney_state");
+        if (raw) {
+          const saved = JSON.parse(raw);
+          if (saved?.caseData && !saved.outcome) {
+            setResumableCase({
+              title: saved.caseData.title ?? "Untitled Case",
+              exchangeCount: saved.exchangeCount ?? 0,
+            });
+          }
+        }
+      } catch {
+        // Ignore parse errors
+      }
     }
     init();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleEnter = useCallback(async () => {
-    if (loading) return;
+  const startCaseGeneration = useCallback(async () => {
     setLoading(true);
     setError(null);
     setGeneratingCase(true);
     reset();
+    clearPersisted();
 
     try {
       const caseData = await generateCase();
@@ -67,7 +87,32 @@ export default function SplashScreen() {
       const msg = err instanceof Error ? err.message : "Failed to generate case";
       setError(msg);
     }
-  }, [loading, initCase, setGeneratingCase, reset, router]);
+  }, [initCase, setGeneratingCase, reset, clearPersisted, router]);
+
+  const handleEnter = useCallback(() => {
+    if (loading) return;
+    // Show tutorial on first visit
+    const seen = localStorage.getItem("ace_tutorial_seen");
+    if (!seen) {
+      setShowTutorial(true);
+      return;
+    }
+    startCaseGeneration();
+  }, [loading, startCaseGeneration]);
+
+  const handleTutorialComplete = useCallback(() => {
+    localStorage.setItem("ace_tutorial_seen", "true");
+    setShowTutorial(false);
+    startCaseGeneration();
+  }, [startCaseGeneration]);
+
+  const handleResume = useCallback(() => {
+    // Hydrate the argument store from localStorage and navigate to chat
+    const { hydrate } = useArgumentStore.getState();
+    hydrate();
+    setResumableCase(null);
+    router.push("/chat");
+  }, [router]);
 
   const handleViewArgument = useCallback(
     (id: string) => {
@@ -93,10 +138,8 @@ export default function SplashScreen() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => router.push("/leaderboard")}
-              className="text-xs px-3 py-1.5 rounded-full border cursor-pointer transition-all duration-150"
-              style={{ borderColor: "var(--chip-border)", color: "var(--text-secondary)", background: "transparent" }}
-              onMouseEnter={(e) => e.currentTarget.style.background = "var(--hover-overlay)"}
-              onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+              className="text-xs px-3 py-1.5 rounded-full border cursor-pointer transition-all duration-150 hover:bg-[var(--hover-overlay)]"
+              style={{ borderColor: "var(--chip-border)", color: "var(--text-secondary)" }}
             >
               Leaderboard
             </button>
@@ -105,10 +148,8 @@ export default function SplashScreen() {
             {userId ? (
               <button
                 onClick={() => router.push("/profile")}
-                className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-full border cursor-pointer transition-all duration-150"
-                style={{ borderColor: "var(--chip-border)", color: "var(--text-secondary)", background: "transparent" }}
-                onMouseEnter={(e) => e.currentTarget.style.background = "var(--hover-overlay)"}
-                onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-full border cursor-pointer transition-all duration-150 hover:bg-[var(--hover-overlay)]"
+                style={{ borderColor: "var(--chip-border)", color: "var(--text-secondary)" }}
               >
                 <span
                   className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-semibold overflow-hidden"
@@ -149,25 +190,41 @@ export default function SplashScreen() {
         {/* Enter button */}
         <div className="flex flex-col items-center gap-3 w-full max-w-sm mx-auto">
           {loading ? (
-            <div className="flex flex-col items-center gap-3 py-3">
-              <div
-                className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin"
-                style={{ borderColor: "var(--primary)", borderTopColor: "transparent" }}
-              />
-              <p className="text-sm" style={{ color: "var(--text-secondary)" }}>Preparing the case...</p>
-            </div>
+            <CaseLoadingAnimation />
           ) : (
-            <button
-              onClick={handleEnter}
-              className="w-full py-3.5 px-8 rounded-full text-white text-sm font-semibold tracking-widest
-                         transition-all duration-200 hover:brightness-110 active:scale-[0.98] cursor-pointer"
-              style={{
-                background: "var(--primary)",
-                boxShadow: "0 4px 20px rgba(255, 56, 92, 0.3)",
-              }}
-            >
-              ENTER THE COURTROOM
-            </button>
+            <>
+              {resumableCase && (
+                <button
+                  onClick={handleResume}
+                  className="w-full py-3.5 px-8 rounded-full text-sm font-semibold tracking-widest
+                             transition-all duration-200 hover:brightness-110 active:scale-[0.98] cursor-pointer"
+                  style={{
+                    background: "transparent",
+                    border: "1.5px solid var(--primary)",
+                    color: "var(--primary)",
+                  }}
+                >
+                  RESUME CASE
+                  <span
+                    className="block text-[10px] font-normal tracking-normal mt-0.5"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    {resumableCase.title} &middot; Round {resumableCase.exchangeCount}
+                  </span>
+                </button>
+              )}
+              <button
+                onClick={handleEnter}
+                className="w-full py-3.5 px-8 rounded-full text-white text-sm font-semibold tracking-widest
+                           transition-all duration-200 hover:brightness-110 active:scale-[0.98] cursor-pointer"
+                style={{
+                  background: "var(--primary)",
+                  boxShadow: "0 4px 20px rgba(255, 56, 92, 0.3)",
+                }}
+              >
+                {resumableCase ? "NEW CASE" : "ENTER THE COURTROOM"}
+              </button>
+            </>
           )}
           {error && (
             <p className="text-xs text-center mt-1" style={{ color: "var(--primary)" }}>{error}</p>
@@ -200,6 +257,9 @@ export default function SplashScreen() {
       <p className="text-[10px] text-center py-3 shrink-0" style={{ color: "var(--text-muted)" }}>
         Powered by Claude AI
       </p>
+
+      {/* Tutorial modal for first-time users */}
+      <TutorialModal open={showTutorial} onComplete={handleTutorialComplete} />
     </div>
   );
 }

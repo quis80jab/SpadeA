@@ -59,7 +59,7 @@ async function callClaude(
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { agent, context, userMessage, exchangeCount, surrender } = body;
+    const { agent, context, userMessage, exchangeCount, surrender, categoryHint } = body;
 
     let systemPrompt: string;
     let userContent: string;
@@ -67,7 +67,9 @@ export async function POST(request: NextRequest) {
     switch (agent) {
       case 'case_creator':
         systemPrompt = CASE_CREATOR_PROMPT;
-        userContent = 'Generate a new absurd but philosophically deep court case. Output ONLY the JSON object.';
+        userContent = categoryHint
+          ? `Generate a new absurd but philosophically deep court case in this category: ${categoryHint}. Be creative and surprising — don't be too literal with the category. Output ONLY the JSON object.`
+          : 'Generate a new absurd but philosophically deep court case. Output ONLY the JSON object.';
         break;
 
       case 'lawyer': {

@@ -89,65 +89,87 @@ export function MessageBubble({
     [openMenu]
   );
 
-  // ─── Download image with watermark ───
+  // ─── Save / share image with watermark ───
   const handleDownloadImage = useCallback(async () => {
-    if (!bubbleRef.current || downloading) return;
+    if (!wrapperRef.current || downloading) return;
     setDownloading(true);
 
     try {
       const html2canvas = (await import("html2canvas")).default;
 
-      // Create wrapper with constrained width for readable text
-      const wrapper = document.createElement("div");
-      wrapper.style.cssText = `
-        padding: 24px 24px 0 24px;
-        background: #111111;
-        border-radius: 16px 16px 0 0;
-        display: block;
-        position: fixed;
-        left: -9999px;
-        top: 0;
-        min-width: 320px;
-        max-width: 480px;
-        width: auto;
-        font-family: "Berkeley Mono", system-ui, -apple-system, sans-serif;
-        overflow-wrap: break-word;
-        word-break: break-word;
+      // Resolve CSS variable colours from live DOM
+      const rootStyles = getComputedStyle(document.documentElement);
+      const pageBg = rootStyles.getPropertyValue("--bg").trim() || "#111111";
+
+      const bubbleEl = bubbleRef.current;
+      const bubbleComputed = bubbleEl ? getComputedStyle(bubbleEl) : null;
+      const bubbleBg = bubbleComputed?.backgroundColor ?? "rgba(45,30,65,0.45)";
+      const bubbleColor = bubbleComputed?.color ?? "#ffffff";
+      const labelEl = wrapperRef.current.querySelector("span");
+      const labelColor = labelEl ? getComputedStyle(labelEl).color : "var(--primary)";
+
+      // Fixed export width so text reflows consistently regardless of screen size
+      const EXPORT_WIDTH = 420;
+
+      // Build offscreen card: label → bubble → watermark
+      const outer = document.createElement("div");
+      outer.style.cssText = `
+        position: fixed; left: -9999px; top: 0;
+        width: ${EXPORT_WIDTH}px;
+        font-family: system-ui, -apple-system, sans-serif;
       `;
 
-      // Clone the bubble content
-      const clone = bubbleRef.current.cloneNode(true) as HTMLElement;
-      clone.style.transform = "none";
-      clone.style.maxWidth = "100%";
-      wrapper.appendChild(clone);
+      // Top area (label + bubble)
+      const card = document.createElement("div");
+      card.style.cssText = `
+        padding: 24px;
+        background: ${pageBg};
+        border-radius: 16px 16px 0 0;
+        overflow-wrap: break-word; word-break: break-word;
+      `;
 
-      // White bottom bar with URL watermark
+      // Sender label
+      const label = document.createElement("div");
+      label.style.cssText = `
+        font-size: 10px; font-weight: 600; letter-spacing: 0.1em;
+        margin-bottom: 6px; color: ${labelColor};
+      `;
+      label.textContent = isAttorney ? "PROSECUTION" : "YOU";
+      card.appendChild(label);
+
+      // Bubble
+      const bubble = document.createElement("div");
+      bubble.style.cssText = `
+        background: ${bubbleBg};
+        border-radius: 16px;
+        ${isAttorney ? "border-top-left-radius: 6px;" : "border-top-right-radius: 6px;"}
+        padding: 14px 16px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+      `;
+      const textP = document.createElement("p");
+      textP.style.cssText = `
+        font-size: 15px; line-height: 1.6;
+        color: ${bubbleColor};
+        white-space: pre-wrap; margin: 0;
+      `;
+      textP.textContent = message.text;
+      bubble.appendChild(textP);
+      card.appendChild(bubble);
+
+      // Watermark bar
       const watermark = document.createElement("div");
       watermark.style.cssText = `
         background: #ffffff;
-        margin-top: 20px;
-        padding: 12px 24px;
+        padding: 10px 24px;
         border-radius: 0 0 16px 16px;
         text-align: center;
-        font-size: 12px;
-        font-weight: 500;
-        color: #222222;
-        letter-spacing: 0.05em;
-        font-family: "Berkeley Mono", system-ui, -apple-system, sans-serif;
+        font-size: 11px; font-weight: 500;
+        color: #555555; letter-spacing: 0.04em;
+        font-family: system-ui, -apple-system, sans-serif;
       `;
       watermark.textContent = SITE_URL;
 
-      // Outer container to hold both
-      const outer = document.createElement("div");
-      outer.style.cssText = `
-        position: fixed;
-        left: -9999px;
-        top: 0;
-        display: inline-block;
-        min-width: 320px;
-        max-width: 480px;
-      `;
-      outer.appendChild(wrapper);
+      outer.appendChild(card);
       outer.appendChild(watermark);
       document.body.appendChild(outer);
 
@@ -156,20 +178,40 @@ export function MessageBubble({
         scale: 2,
         useCORS: true,
       });
-
       document.body.removeChild(outer);
 
-      const link = document.createElement("a");
-      link.download = `ace-attorney-${Date.now()}.png`;
-      link.href = canvas.toDataURL("image/png");
-      link.click();
+      // Convert canvas → Blob → try native share (saves to camera roll on iOS)
+      const blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob((b) => resolve(b), "image/png")
+      );
+
+      if (blob) {
+        const file = new File([blob], `ace-attorney-${Date.now()}.png`, { type: "image/png" });
+
+        // Prefer share sheet (camera roll / AirDrop / Messages on iOS)
+        if (navigator.share && navigator.canShare?.({ files: [file] })) {
+          try {
+            await navigator.share({ files: [file] });
+          } catch {
+            // User cancelled share — no-op
+          }
+        } else {
+          // Desktop fallback — regular download
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.download = file.name;
+          link.href = url;
+          link.click();
+          URL.revokeObjectURL(url);
+        }
+      }
     } catch {
       // Silent fail
     }
 
     setDownloading(false);
     setShowMenu(false);
-  }, [downloading]);
+  }, [downloading, isAttorney, message.text]);
 
   // ─── Copy text ───
   const handleCopyText = useCallback(async () => {
@@ -267,7 +309,7 @@ export function MessageBubble({
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerCancel}
         onContextMenu={handleContextMenu}
-        style={{ touchAction: "auto", userSelect: "none" }}
+        style={{ touchAction: "auto", userSelect: "none", WebkitUserSelect: "none", WebkitTouchCallout: "none" } as React.CSSProperties}
       >
         <span
           className={`text-[10px] font-medium tracking-wider mb-1 ${
@@ -324,10 +366,8 @@ export function MessageBubble({
           >
             <button
               onClick={handleDownloadImage}
-              className="w-full flex items-center gap-3 px-4 py-3 text-sm text-left transition-colors cursor-pointer"
+              className="w-full flex items-center gap-3 px-4 py-3 text-sm text-left transition-all duration-150 cursor-pointer hover:bg-[var(--hover-overlay)]"
               style={{ color: "var(--text-primary)" }}
-              onMouseEnter={(e) => e.currentTarget.style.background = "var(--hover-overlay)"}
-              onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" strokeLinecap="round" strokeLinejoin="round"/>
@@ -339,10 +379,8 @@ export function MessageBubble({
             <div className="h-px" style={{ background: "var(--border-subtle)" }} />
             <button
               onClick={handleShareLink}
-              className="w-full flex items-center gap-3 px-4 py-3 text-sm text-left transition-colors cursor-pointer"
+              className="w-full flex items-center gap-3 px-4 py-3 text-sm text-left transition-all duration-150 cursor-pointer hover:bg-[var(--hover-overlay)]"
               style={{ color: "var(--text-primary)" }}
-              onMouseEnter={(e) => e.currentTarget.style.background = "var(--hover-overlay)"}
-              onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
@@ -354,10 +392,8 @@ export function MessageBubble({
             <div className="h-px" style={{ background: "var(--border-subtle)" }} />
             <button
               onClick={handleCopyText}
-              className="w-full flex items-center gap-3 px-4 py-3 text-sm text-left transition-colors cursor-pointer"
+              className="w-full flex items-center gap-3 px-4 py-3 text-sm text-left transition-all duration-150 cursor-pointer hover:bg-[var(--hover-overlay)]"
               style={{ color: "var(--text-primary)" }}
-              onMouseEnter={(e) => e.currentTarget.style.background = "var(--hover-overlay)"}
-              onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2" strokeLinecap="round" strokeLinejoin="round"/>

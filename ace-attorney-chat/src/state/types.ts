@@ -170,6 +170,7 @@ export interface UserProfile {
 export interface LeaderboardEntry {
   id: string;
   display_name: string;
+  avatar_url: string | null;
   wins: number;
   losses: number;
   total_score: number;

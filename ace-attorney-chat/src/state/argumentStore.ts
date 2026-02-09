@@ -44,6 +44,7 @@ interface ArgumentActions {
   useEvidenceCard: (id: string) => void;
   persist: () => void;
   hydrate: () => void;
+  clearPersisted: () => void;
 }
 
 const initialState: ArgumentState = {
@@ -230,6 +231,14 @@ export const useArgumentStore = create<ArgumentState & ArgumentActions>((set, ge
       }
     } catch {
       // Ignore hydration errors
+    }
+  },
+
+  clearPersisted: () => {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // localStorage not available (SSR)
     }
   },
 }));

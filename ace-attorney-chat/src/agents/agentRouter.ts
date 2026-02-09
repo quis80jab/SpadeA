@@ -5,6 +5,7 @@ import {
   generateConversationMd,
 } from '@/src/state/markdownManager';
 import { useArgumentStore } from '@/src/state/argumentStore';
+import { CASE_CATEGORIES } from './prompts';
 
 // ─── Build context string from current store state ───
 
@@ -55,7 +56,8 @@ async function callAgentAPI(body: Record<string, unknown>): Promise<string> {
 // ─── Agent Callers ───
 
 export async function callCaseCreator(): Promise<string> {
-  return callAgentAPI({ agent: 'case_creator' });
+  const category = CASE_CATEGORIES[Math.floor(Math.random() * CASE_CATEGORIES.length)];
+  return callAgentAPI({ agent: 'case_creator', categoryHint: category });
 }
 
 export async function callLawyer(

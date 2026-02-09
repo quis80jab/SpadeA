@@ -74,7 +74,7 @@ function CaseModal({ open, onClose }: { open: boolean; onClose: () => void }) {
             </div>
             <div className="flex justify-between items-center mb-5">
               <h2 className="text-lg font-semibold" style={{ color: "var(--text-primary)" }}>Case Summary</h2>
-              <button onClick={onClose} className="text-sm p-2 cursor-pointer rounded-full hover:brightness-90 transition-colors" style={{ color: "var(--text-muted)" }}>
+              <button onClick={onClose} className="text-sm p-2 cursor-pointer rounded-full hover:bg-[var(--hover-overlay)] transition-all duration-150" style={{ color: "var(--text-muted)" }}>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
               </button>
             </div>
@@ -205,6 +205,7 @@ export default function ChatPage() {
 
   const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
   const hasOpenedRef = useRef(false);
+  const publicByDefaultRef = useRef<boolean>(true);
 
   const {
     caseData,
@@ -227,6 +228,7 @@ export default function ChatPage() {
     setOutcome,
     useEvidenceCard,
     persist,
+    clearPersisted,
   } = useArgumentStore();
 
   const { saveArgument } = useHistoryStore();
@@ -258,6 +260,7 @@ export default function ChatPage() {
         finalHealth: state.health,
         exchangeCount: state.exchangeCount,
         score,
+        is_public: publicByDefaultRef.current,
       });
 
       // Update profile stats in Supabase
@@ -287,10 +290,41 @@ export default function ChatPage() {
     [saveArgument, calculateScore]
   );
 
-  // ─── Redirect if no case ───
+  // ─── Fetch user's privacy preference ───
   useEffect(() => {
-    if (!caseData) router.replace("/");
-  }, [caseData, router]);
+    (async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data } = await supabase
+          .from("profiles")
+          .select("arguments_public_by_default")
+          .eq("id", user.id)
+          .single();
+        if (data) {
+          publicByDefaultRef.current = (data as { arguments_public_by_default: boolean }).arguments_public_by_default;
+        }
+      }
+    })();
+  }, []);
+
+  // ─── Hydrate from localStorage if store is empty (e.g. page refresh) ───
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    if (!caseData) {
+      // Try restoring from localStorage before giving up
+      const { hydrate } = useArgumentStore.getState();
+      hydrate();
+    }
+    setHydrated(true);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ─── Redirect if no case (only after hydration attempt) ───
+  useEffect(() => {
+    if (hydrated && !caseData) router.replace("/");
+  }, [hydrated, caseData, router]);
 
   // ─── Initial attorney opening ───
   useEffect(() => {
@@ -371,6 +405,7 @@ export default function ChatPage() {
 
       await saveToHistory(outcome);
       persist();
+      clearPersisted(); // Game is over — remove in-progress state
 
       // Check if user is logged in
       const supabaseClient = createClient();
@@ -390,7 +425,7 @@ export default function ChatPage() {
         }
       }, 3500);
     },
-    [triggerIntensityEffects, saveToHistory, persist, setOutcome, setSuggestions, router]
+    [triggerIntensityEffects, saveToHistory, persist, clearPersisted, setOutcome, setSuggestions, router]
   );
 
   // ─── Attorney opening ───
@@ -456,6 +491,7 @@ export default function ChatPage() {
         setShowGuilty(true);
         await saveToHistory("lost");
         persist();
+        clearPersisted(); // Game is over — remove in-progress state
 
         setTimeout(() => {
           setOutcome("lost");
@@ -554,7 +590,14 @@ export default function ChatPage() {
     [handleSendCustom]
   );
 
-  if (!caseData) return null;
+  if (!caseData) {
+    // Show loading spinner while hydrating, then redirect happens via effect
+    return (
+      <div className="flex items-center justify-center h-dvh" style={{ background: "var(--bg)" }}>
+        <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: "var(--primary)", borderTopColor: "transparent" }} />
+      </div>
+    );
+  }
 
   return (
     <div
@@ -573,7 +616,7 @@ export default function ChatPage() {
             </span>
             <button
               onClick={() => setShowCaseModal(true)}
-              className="text-xs px-3.5 py-1.5 rounded-full border cursor-pointer transition-all duration-150"
+              className="text-xs px-3.5 py-1.5 rounded-full border cursor-pointer transition-all duration-150 hover:bg-[var(--hover-overlay)]"
               style={{ borderColor: "var(--chip-border)", color: "var(--text-secondary)" }}
             >
               Case Details
@@ -710,7 +753,7 @@ export default function ChatPage() {
               </button>
               <button
                 onClick={() => { setShowSignupPrompt(false); router.replace("/"); }}
-                className="w-full py-2.5 text-sm font-medium cursor-pointer transition-all duration-150 hover:opacity-80"
+                className="w-full py-2.5 text-sm font-medium cursor-pointer transition-all duration-150 hover:bg-[var(--hover-overlay)] rounded-xl"
                 style={{ color: "var(--text-muted)" }}
               >
                 Maybe Later

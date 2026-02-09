@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { createClient } from "@/src/lib/supabase/client";
+import { AvatarCropModal } from "@/src/components/AvatarCropModal";
 import type { UserProfile } from "@/src/state/types";
 
 export default function SettingsPage() {
@@ -25,10 +26,12 @@ export default function SettingsPage() {
   const [theme, setThemeLocal] = useState<"dark" | "light">("dark");
   const [publicByDefault, setPublicByDefault] = useState(true);
 
-  // Avatar upload
+  // Avatar upload & crop
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [showCropModal, setShowCropModal] = useState(false);
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -101,24 +104,50 @@ export default function SettingsPage() {
     localStorage.setItem("ace_theme", t);
   };
 
-  // Handle avatar upload
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !profile) return;
+  // Ensure the avatars storage bucket exists (auto-create if missing)
+  const ensureBucket = async () => {
+    const { data: buckets } = await supabase.storage.listBuckets();
+    if (!buckets?.some((b) => b.id === "avatars")) {
+      await supabase.storage.createBucket("avatars", {
+        public: true,
+        fileSizeLimit: 5 * 1024 * 1024,
+      });
+    }
+  };
+
+  // Handle avatar upload (validates, then hands off to crop modal or uploads directly)
+  const handleAvatarUpload = async (blob: Blob) => {
+    if (!profile) return;
     setUploadingAvatar(true);
     setError(null);
 
     try {
-      const ext = file.name.split(".").pop();
-      const filePath = `${profile.id}/avatar.${ext}`;
+      const filePath = `${profile.id}/avatar.png`;
 
-      const { error: uploadError } = await supabase.storage
+      // Try upload; if bucket missing, create it and retry once
+      let uploadResult = await supabase.storage
         .from("avatars")
-        .upload(filePath, file, { upsert: true });
+        .upload(filePath, blob, { upsert: true, contentType: "image/png" });
 
-      if (uploadError) {
-        // If bucket doesn't exist, show helpful message
-        setError("Avatar upload failed. Storage bucket may not be configured.");
+      if (
+        uploadResult.error &&
+        (uploadResult.error.message?.includes("bucket") ||
+          uploadResult.error.message?.includes("not found") ||
+          uploadResult.error.message?.includes("Bucket not found"))
+      ) {
+        // Auto-create bucket and retry
+        await ensureBucket();
+        uploadResult = await supabase.storage
+          .from("avatars")
+          .upload(filePath, blob, { upsert: true, contentType: "image/png" });
+      }
+
+      if (uploadResult.error) {
+        if (uploadResult.error.message?.includes("Payload too large")) {
+          setError("Image too large. Please use an image under 5 MB.");
+        } else {
+          setError(`Upload failed: ${uploadResult.error.message}`);
+        }
         setUploadingAvatar(false);
         return;
       }
@@ -128,18 +157,65 @@ export default function SettingsPage() {
         .getPublicUrl(filePath);
 
       const publicUrl = urlData.publicUrl + "?t=" + Date.now();
-      setAvatarUrl(publicUrl);
 
-      // Save to profile immediately
-      await supabase
+      // Persist to profiles table
+      const { error: dbError } = await supabase
         .from("profiles")
         .update({ avatar_url: publicUrl })
         .eq("id", profile.id);
+
+      if (dbError) {
+        setError(`Failed to save avatar URL: ${dbError.message}`);
+        setUploadingAvatar(false);
+        return;
+      }
+
+      // Update local state only after DB confirms success
+      setAvatarUrl(publicUrl);
+      setProfile({ ...profile, avatar_url: publicUrl });
     } catch {
-      setError("Failed to upload avatar.");
+      setError("Failed to upload avatar. Check your network connection.");
     }
     setUploadingAvatar(false);
   };
+
+  // File picker handler — validates then opens crop modal
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !profile) return;
+    // Reset input so same file can be re-selected
+    e.target.value = "";
+
+    // Validate type
+    if (!file.type.startsWith("image/")) {
+      setError("Please select an image file (JPG, PNG, etc.).");
+      return;
+    }
+    // Validate size (5 MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Image must be under 5 MB.");
+      return;
+    }
+
+    // Read file as data URL for crop modal
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropImageSrc(reader.result as string);
+      setShowCropModal(true);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Callback from crop modal — receives the cropped & normalized blob
+  const handleCropComplete = useCallback(
+    async (blob: Blob) => {
+      setShowCropModal(false);
+      setCropImageSrc(null);
+      await handleAvatarUpload(blob);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [profile]
+  );
 
   const handleSave = async () => {
     if (!profile || saving) return;
@@ -228,7 +304,7 @@ export default function SettingsPage() {
       >
         <button
           onClick={() => router.push("/profile")}
-          className="text-sm px-3.5 py-1.5 rounded-full border cursor-pointer transition-all duration-150"
+          className="text-sm px-3.5 py-1.5 rounded-full border cursor-pointer transition-all duration-150 hover:bg-[var(--hover-overlay)]"
           style={{
             borderColor: "var(--chip-border)",
             color: "var(--text-secondary)",
@@ -318,7 +394,7 @@ export default function SettingsPage() {
               type="file"
               accept="image/*"
               className="hidden"
-              onChange={handleAvatarUpload}
+              onChange={handleFileSelect}
             />
             <p
               className="text-xs cursor-pointer hover:underline"
@@ -487,7 +563,7 @@ export default function SettingsPage() {
           {/* Sign Out */}
           <button
             onClick={handleSignOut}
-            className="w-full py-3 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer hover:brightness-95"
+            className="w-full py-3 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer hover:bg-[var(--hover-overlay)]"
             style={{
               color: "var(--primary)",
               border: "1px solid rgba(255,56,92,0.2)",
@@ -497,6 +573,19 @@ export default function SettingsPage() {
           </button>
         </motion.div>
       </div>
+
+      {/* Avatar Crop Modal */}
+      {cropImageSrc && (
+        <AvatarCropModal
+          open={showCropModal}
+          imageSrc={cropImageSrc}
+          onClose={() => {
+            setShowCropModal(false);
+            setCropImageSrc(null);
+          }}
+          onCropComplete={handleCropComplete}
+        />
+      )}
     </div>
   );
 }

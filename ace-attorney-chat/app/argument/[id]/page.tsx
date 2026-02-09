@@ -108,7 +108,7 @@ export default function ArgumentViewer() {
       >
         <button
           onClick={() => router.push("/")}
-          className="text-sm px-3.5 py-1.5 rounded-full border cursor-pointer transition-all duration-150"
+          className="text-sm px-3.5 py-1.5 rounded-full border cursor-pointer transition-all duration-150 hover:bg-[var(--hover-overlay)]"
           style={{ borderColor: "var(--chip-border)", color: "var(--text-secondary)" }}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="inline mr-1 -mt-0.5"><path d="M19 12H5M12 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round"/></svg>

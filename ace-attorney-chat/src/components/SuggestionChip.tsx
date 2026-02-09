@@ -30,7 +30,7 @@ export function SuggestionChip({ suggestion, onPress, index, disabled }: Suggest
       disabled={disabled}
       className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl border shrink-0
                   transition-all duration-150 cursor-pointer select-none
-                  hover:bg-white/5 active:scale-[0.97]
+                  hover:bg-[var(--hover-overlay)] active:scale-[0.97]
                   disabled:opacity-40 disabled:cursor-not-allowed
                   max-w-[280px] min-w-[140px]`}
       style={{

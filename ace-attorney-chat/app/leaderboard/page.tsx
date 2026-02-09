@@ -65,7 +65,7 @@ export default function LeaderboardPage() {
       >
         <button
           onClick={() => router.push("/")}
-          className="text-sm px-3.5 py-1.5 rounded-full border cursor-pointer transition-all duration-150"
+          className="text-sm px-3.5 py-1.5 rounded-full border cursor-pointer transition-all duration-150 hover:bg-[var(--hover-overlay)]"
           style={{
             borderColor: "var(--chip-border)",
             color: "var(--text-secondary)",
@@ -190,7 +190,7 @@ export default function LeaderboardPage() {
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.02 }}
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl mb-1 transition-all"
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl mb-1 transition-all duration-150"
                   style={{
                     background: isMe
                       ? "rgba(255,56,92,0.08)"
@@ -207,24 +207,37 @@ export default function LeaderboardPage() {
                   >
                     {idx + 1}
                   </span>
-                  <span
-                    className="flex-1 text-sm font-medium truncate"
-                    style={{
-                      color: isMe
-                        ? "var(--primary)"
-                        : "var(--text-primary)",
-                    }}
-                  >
-                    {entry.display_name}
-                    {isMe && (
-                      <span
-                        className="text-[10px] ml-1.5 font-normal"
-                        style={{ color: "var(--text-muted)" }}
-                      >
-                        (you)
-                      </span>
-                    )}
-                  </span>
+                  <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                    <div
+                      className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-semibold shrink-0 overflow-hidden"
+                      style={{ background: "var(--bg-card)", color: "var(--text-muted)" }}
+                    >
+                      {entry.avatar_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={entry.avatar_url} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        entry.display_name.charAt(0).toUpperCase()
+                      )}
+                    </div>
+                    <span
+                      className="text-sm font-medium truncate"
+                      style={{
+                        color: isMe
+                          ? "var(--primary)"
+                          : "var(--text-primary)",
+                      }}
+                    >
+                      {entry.display_name}
+                      {isMe && (
+                        <span
+                          className="text-[10px] ml-1.5 font-normal"
+                          style={{ color: "var(--text-muted)" }}
+                        >
+                          (you)
+                        </span>
+                      )}
+                    </span>
+                  </div>
                   <span
                     className="w-16 text-sm tabular-nums text-right"
                     style={{ color: "var(--text-secondary)" }}

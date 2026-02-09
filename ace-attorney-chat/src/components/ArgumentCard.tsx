@@ -29,16 +29,16 @@ export function ArgumentCard({ argument, onView, onToggleStar, index }: Argument
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.04, duration: 0.25 }}
-      className="rounded-2xl p-5 cursor-pointer transition-all duration-150 hover:bg-white/[0.03] active:scale-[0.99]"
+      className="rounded-2xl p-5 cursor-pointer transition-all duration-150 hover:brightness-[0.97] active:scale-[0.99]"
       style={{
         background: "var(--bg-light)",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.12)",
       }}
       onClick={() => onView(argument.id)}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-medium text-white truncate">{argument.caseData.title}</h3>
+          <h3 className="text-sm font-medium truncate" style={{ color: "var(--text-primary)" }}>{argument.caseData.title}</h3>
           <p className="text-xs mt-1 truncate" style={{ color: "var(--text-muted)" }}>
             {argument.caseData.charge}
           </p>
@@ -48,7 +48,7 @@ export function ArgumentCard({ argument, onView, onToggleStar, index }: Argument
             e.stopPropagation();
             onToggleStar(argument.id);
           }}
-          className="shrink-0 cursor-pointer p-1.5 -m-1 rounded-full hover:bg-white/5 transition-colors"
+          className="shrink-0 cursor-pointer p-1.5 -m-1 rounded-full transition-all duration-150 hover:bg-[var(--hover-overlay)]"
           title={argument.starred ? "Unstar" : "Star"}
         >
           {argument.starred ? (

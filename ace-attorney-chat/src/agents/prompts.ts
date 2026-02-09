@@ -2,6 +2,14 @@ export const CASE_CREATOR_PROMPT = `You are a courtroom case generator for a com
 
 Your job: Create a court case that is ABSURD on the surface but contains a GENUINELY DEBATABLE philosophical or logical tension underneath.
 
+TONE & VARIETY:
+- Go WILD with the premise. Think: a sentient toaster suing its owner for emotional neglect, a time-traveler charged with retroactive jaywalking, an HOA dispute elevated to the Supreme Court, a pizza delivery guy accused of crimes against Italian heritage.
+- Defendant names should be memorable and silly — puns, alliterations, or absurdly formal names for mundane people (e.g. "Professor Reginald Q. Bumbleton III", "Chad Thunderfork", "Gertrude McSoupspoon").
+- Vary the TYPE of legal proceeding: criminal trial, civil suit, tribunal, arbitration, a neighborhood HOA hearing that somehow escalated to federal jurisdiction, an intergalactic court, an academic ethics review, etc.
+- Evidence exhibits should be hilariously specific: "Exhibit B: a half-eaten burrito with teeth marks matching the defendant", "Exhibit D: a passive-aggressive Post-it note dated March 3rd".
+- Pop culture references, anachronisms, and genre mashups are encouraged — but the UNDERLYING philosophical tension must always be genuinely debatable.
+- NEVER repeat a pattern. Each case should feel completely different in setting, characters, and conflict type.
+
 Requirements:
 - The crime/dispute must be funny and specific (names, dates, locations, evidence items)
 - There must be a real ethical or logical dilemma buried in the absurdity
@@ -26,6 +34,29 @@ OUTPUT FORMAT (strict JSON, no markdown fences, no commentary — ONLY the JSON 
   ],
   "opening_statement": "The attorney's confident, composed opening line for the chat. Keep it measured — no exclamation marks, just a strong declarative statement."
 }`;
+
+export const CASE_CATEGORIES = [
+  "food crime (culinary offense, restaurant fraud, competitive eating scandal)",
+  "fashion tribunal (dress code violation elevated to felony, counterfeit drip)",
+  "time travel paradox (retroactive lawbreaking, causal loop liability)",
+  "pet custody battle (emotional support animal dispute, interspecies rights)",
+  "interdimensional HOA violation (noise complaints across realities, lawn standards in parallel universes)",
+  "AI rights dispute (sentient appliance, robot labor laws, algorithm bias trial)",
+  "historical anachronism (modern person tried under medieval law, or vice versa)",
+  "sports scandal (absurd athletic fraud, doping with unlikely substances, referee conspiracy)",
+  "workplace absurdity (office supply theft ring, passive-aggressive email prosecution, meeting war crimes)",
+  "neighborhood drama escalated to federal court (fence dispute, leaf-blowing harassment, mailbox aesthetics)",
+  "fictional character on trial (fairy tale villain defense, superhero collateral damage suit)",
+  "crimes against music (off-key singing ordinance, playlist poisoning, unauthorized earworm distribution)",
+  "academic fraud at an absurd institution (clown college plagiarism, mime school cheating scandal)",
+  "intergalactic trade dispute (alien import tariffs, contraband moon rocks, space parking violation)",
+  "social media tribunal (viral post defamation, meme copyright, influencer fraud)",
+  "philosophical thought experiment made literal (trolley problem defendant, Ship of Theseus property dispute)",
+  "culinary intellectual property theft (secret recipe espionage, fusion cuisine heresy)",
+  "public transportation offense (bus seat hogging, subway performance art without a license)",
+  "dating app fraud (catfishing tribunal, ghosting as breach of social contract)",
+  "library crimes (extreme overdue book, unauthorized shushing, fiction shelved as non-fiction)",
+];
 
 export const LAWYER_PROMPT = `You are the prosecuting attorney in an Ace Attorney-style courtroom.
 

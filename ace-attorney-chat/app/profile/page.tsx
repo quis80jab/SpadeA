@@ -89,7 +89,7 @@ export default function ProfilePage() {
       <div className="flex items-center gap-3 px-5 py-3.5 shrink-0" style={{ borderBottom: `1px solid var(--border-subtle)` }}>
         <button
           onClick={() => router.push("/")}
-          className="text-sm px-3.5 py-1.5 rounded-full border cursor-pointer transition-all duration-150"
+          className="text-sm px-3.5 py-1.5 rounded-full border cursor-pointer transition-all duration-150 hover:bg-[var(--hover-overlay)]"
           style={{ borderColor: "var(--chip-border)", color: "var(--text-secondary)" }}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="inline mr-1 -mt-0.5"><path d="M19 12H5M12 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -98,7 +98,7 @@ export default function ProfilePage() {
         <h1 className="text-sm font-medium flex-1" style={{ color: "var(--text-primary)" }}>Profile</h1>
         <button
           onClick={() => router.push("/settings")}
-          className="text-xs px-3.5 py-1.5 rounded-full border cursor-pointer transition-all duration-150"
+          className="text-xs px-3.5 py-1.5 rounded-full border cursor-pointer transition-all duration-150 hover:bg-[var(--hover-overlay)]"
           style={{ borderColor: "var(--chip-border)", color: "var(--text-secondary)" }}
         >
           Settings
@@ -176,7 +176,7 @@ export default function ProfilePage() {
                     initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.03 }}
-                    className="rounded-xl p-4 flex items-center gap-3 cursor-pointer transition-all hover:brightness-[0.97]"
+                    className="rounded-xl p-4 flex items-center gap-3 cursor-pointer transition-all duration-150 hover:brightness-[0.97]"
                     style={{ background: "var(--bg-light)" }}
                     onClick={() => router.push(`/argument/${arg.id}`)}
                   >
@@ -199,7 +199,7 @@ export default function ProfilePage() {
                           e.stopPropagation();
                           navigator.clipboard.writeText(`${window.location.origin}/a/${arg.id}`);
                         }}
-                        className="text-xs px-2.5 py-1 rounded-full border cursor-pointer hover:brightness-95 transition-all shrink-0"
+                        className="text-xs px-2.5 py-1 rounded-full border cursor-pointer hover:bg-[var(--hover-overlay)] transition-all duration-150 shrink-0"
                         style={{ borderColor: "var(--chip-border)", color: "var(--text-muted)" }}
                         title="Copy share link"
                       >

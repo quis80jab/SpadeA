@@ -109,7 +109,7 @@ export default function LoginPage() {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}
         onClick={() => router.push("/")}
-        className="absolute top-6 left-6 text-xs cursor-pointer px-3.5 py-1.5 rounded-full border hover:brightness-95 transition-all"
+        className="absolute top-6 left-6 text-xs cursor-pointer px-3.5 py-1.5 rounded-full border hover:bg-[var(--hover-overlay)] transition-all duration-150"
         style={{ borderColor: "var(--chip-border)", color: "var(--text-secondary)" }}
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="inline mr-1 -mt-0.5"><path d="M19 12H5M12 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -202,7 +202,7 @@ export default function LoginPage() {
                 </h2>
                 <button
                   onClick={() => switchMode("idle")}
-                  className="p-1.5 -m-1 rounded-full hover:brightness-90 cursor-pointer transition-colors"
+                  className="p-1.5 -m-1 rounded-full hover:bg-[var(--hover-overlay)] cursor-pointer transition-all duration-150"
                   style={{ color: "var(--text-muted)" }}
                 >
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>

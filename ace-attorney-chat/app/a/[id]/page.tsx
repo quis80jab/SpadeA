@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { Suspense, useEffect, useState, useRef } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { createClient } from "@/src/lib/supabase/client";
@@ -8,7 +8,7 @@ import { HealthBarStatic } from "@/src/components/HealthBar";
 import { MessageBubble } from "@/src/components/MessageBubble";
 import type { SavedArgument } from "@/src/state/types";
 
-export default function SharedArgumentViewer() {
+function SharedArgumentViewerInner() {
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -73,15 +73,17 @@ export default function SharedArgumentViewer() {
   // Scroll to highlighted message after render
   useEffect(() => {
     if (!argument || !highlightMsgId || hasScrolled.current) return;
-    // Small delay to let messages render
-    const timer = setTimeout(() => {
-      const el = document.getElementById(`msg-${highlightMsgId}`);
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
-        hasScrolled.current = true;
-      }
-    }, 300);
-    return () => clearTimeout(timer);
+    // Use requestAnimationFrame + timeout for reliable scroll after paint
+    const raf = requestAnimationFrame(() => {
+      setTimeout(() => {
+        const el = document.getElementById(`msg-${highlightMsgId}`);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          hasScrolled.current = true;
+        }
+      }, 500);
+    });
+    return () => cancelAnimationFrame(raf);
   }, [argument, highlightMsgId]);
 
   if (loading) {
@@ -124,7 +126,7 @@ export default function SharedArgumentViewer() {
       >
         <button
           onClick={() => router.push("/")}
-          className="text-sm px-3.5 py-1.5 rounded-full border cursor-pointer transition-all duration-150"
+          className="text-sm px-3.5 py-1.5 rounded-full border cursor-pointer transition-all duration-150 hover:bg-[var(--hover-overlay)]"
           style={{ borderColor: "var(--chip-border)", color: "var(--text-secondary)" }}
         >
           Home
@@ -168,10 +170,24 @@ export default function SharedArgumentViewer() {
             message={msg}
             argumentId={argument.id}
             isPublic={true}
-            highlighted={msg.id === highlightMsgId}
+            highlighted={String(msg.id) === String(highlightMsgId)}
           />
         ))}
       </div>
     </div>
+  );
+}
+
+export default function SharedArgumentViewer() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center h-dvh" style={{ background: "var(--bg)" }}>
+          <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: "var(--primary)", borderTopColor: "transparent" }} />
+        </div>
+      }
+    >
+      <SharedArgumentViewerInner />
+    </Suspense>
   );
 }

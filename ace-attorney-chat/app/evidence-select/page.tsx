@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useArgumentStore } from "@/src/state/argumentStore";
@@ -11,10 +11,28 @@ export default function EvidenceSelectPage() {
   const router = useRouter();
   const { caseData, selectEvidenceCards, setPhase } = useArgumentStore();
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [hydrated, setHydrated] = useState(false);
+
+  // Hydrate from localStorage if store is empty (e.g. page refresh)
+  useEffect(() => {
+    if (!caseData) {
+      const { hydrate } = useArgumentStore.getState();
+      hydrate();
+    }
+    setHydrated(true);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (hydrated && !caseData) router.replace("/");
+  }, [hydrated, caseData, router]);
 
   if (!caseData) {
-    router.replace("/");
-    return null;
+    return (
+      <div className="flex items-center justify-center h-dvh" style={{ background: "var(--bg)" }}>
+        <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: "var(--primary)", borderTopColor: "transparent" }} />
+      </div>
+    );
   }
 
   const points = caseData.defendant_points;
